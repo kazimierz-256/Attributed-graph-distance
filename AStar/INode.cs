@@ -4,10 +4,10 @@ using System.Text;
 
 namespace AStar
 {
-    public interface INode
+    public interface INode : IComparable
     {
         double UpperBound();
         double LowerBound();
-        IEnumerable<INode> Expand();
+        ICollection<INode> Expand();
     }
 }
