@@ -1,0 +1,5 @@
+C:\Users\Kazimierz\source\repos\Worthy of frequent backup\AStarIterativeApproximators\AStar\bin\Debug\netstandard2.0\AStar.deps.json
+C:\Users\Kazimierz\source\repos\Worthy of frequent backup\AStarIterativeApproximators\AStar\bin\Debug\netstandard2.0\AStar.dll
+C:\Users\Kazimierz\source\repos\Worthy of frequent backup\AStarIterativeApproximators\AStar\obj\Debug\netstandard2.0\AStar.csprojAssemblyReference.cache
+C:\Users\Kazimierz\source\repos\Worthy of frequent backup\AStarIterativeApproximators\AStar\obj\Debug\netstandard2.0\AStar.AssemblyInfoInputs.cache
+C:\Users\Kazimierz\source\repos\Worthy of frequent backup\AStarIterativeApproximators\AStar\obj\Debug\netstandard2.0\AStar.AssemblyInfo.cs
