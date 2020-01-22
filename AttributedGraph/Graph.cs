@@ -24,10 +24,14 @@ namespace AttributedGraph
         }
         public void RemoveEdge((V, V) edge)
             => edges.Remove(edge);
+        public bool ContainsEdge((V, V) edge)
+            => edges.ContainsKey(edge);
         public void AddVertex(V vertex, VA vertexAttribute)
             => vertices.Add(vertex, vertexAttribute);
         public void RemoveVertex(V vertex)
             => vertices.Remove(vertex);
+        public bool ContainsVertex(V vertex)
+            => vertices.ContainsKey(vertex);
         public VA this[V vertex]
         {
             get { return vertices[vertex]; }
