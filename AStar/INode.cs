@@ -11,8 +11,9 @@ namespace AStar
     }
     public interface INode : IComparable
     {
-        double UpperBound(UpperBoundApproximationType lowerBoundApproximationType = UpperBoundApproximationType.Best);
-        double LowerBound();
+        double UpperBound(UpperBoundApproximationType upperBoundApproximationType);
+        double LowerBound { get; }
+
         ICollection<INode> Expand();
     }
 }
