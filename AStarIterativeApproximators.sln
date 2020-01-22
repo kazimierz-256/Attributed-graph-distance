@@ -5,17 +5,21 @@ VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStar", "AStar\AStar.csproj", "{862D62F2-E391-4EBF-B0D6-9326DD4A307F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AStarTest", "AStarTest\AStarTest.csproj", "{B2F117C5-CF5F-4E10-8FA4-4DA94E507071}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarTest", "AStarTest\AStarTest.csproj", "{B2F117C5-CF5F-4E10-8FA4-4DA94E507071}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AttributedGraph", "AttributedGraph\AttributedGraph.csproj", "{2B62DB34-0172-4B7E-A82F-440184A2BD93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AttributedGraph", "AttributedGraph\AttributedGraph.csproj", "{2B62DB34-0172-4B7E-A82F-440184A2BD93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AStarGraphNode", "AStarGraphNode\AStarGraphNode.csproj", "{C6648E37-9D59-4A01-8BE8-0FBF723E7957}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarGraphNode", "AStarGraphNode\AStarGraphNode.csproj", "{C6648E37-9D59-4A01-8BE8-0FBF723E7957}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RandomGraphProvider", "RandomGraphProvider\RandomGraphProvider.csproj", "{D347A2AB-8EA4-4283-AFB3-A4DDF3FDF345}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RandomGraphProvider", "RandomGraphProvider\RandomGraphProvider.csproj", "{D347A2AB-8EA4-4283-AFB3-A4DDF3FDF345}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinearAssignmentSolver", "LinearAssignmentSolver\LinearAssignmentSolver.csproj", "{05C5675D-77D8-40B1-A434-4E993FEF6342}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinearAssignmentSolver", "LinearAssignmentSolver\LinearAssignmentSolver.csproj", "{05C5675D-77D8-40B1-A434-4E993FEF6342}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinearAssignmentPerformanceBenchmark", "LinearAssignmentPerformanceBenchmark\LinearAssignmentPerformanceBenchmark.csproj", "{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinearAssignmentPerformanceBenchmark", "LinearAssignmentPerformanceBenchmark\LinearAssignmentPerformanceBenchmark.csproj", "{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "database_csharp", "database_csharp\database_csharp.csproj", "{397E6731-EB32-4723-9CBD-B67D5B91B4DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "database_csharp_tests", "database_csharp_tests\database_csharp_tests.csproj", "{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +55,14 @@ Global
 		{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{397E6731-EB32-4723-9CBD-B67D5B91B4DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{397E6731-EB32-4723-9CBD-B67D5B91B4DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{397E6731-EB32-4723-9CBD-B67D5B91B4DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{397E6731-EB32-4723-9CBD-B67D5B91B4DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
