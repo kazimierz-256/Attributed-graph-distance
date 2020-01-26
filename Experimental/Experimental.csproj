@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AStarGraphNode\AStarGraphNode.csproj" />
+    <ProjectReference Include="..\AStar\AStar.csproj" />
+    <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
+    <ProjectReference Include="..\RandomGraphProvider\RandomGraphProvider.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -32,6 +32,9 @@ namespace AttributedGraph
             => vertices.Remove(vertex);
         public bool ContainsVertex(V vertex)
             => vertices.ContainsKey(vertex);
+
+        public int VertexCount => vertices.Count;
+        public int EdgeCount => edges.Count;
         public VA this[V vertex]
         {
             get { return vertices[vertex]; }
