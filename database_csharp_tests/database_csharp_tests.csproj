@@ -4,6 +4,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <AssemblyName>Postgres Database Tests</AssemblyName>
+
+    <RootNamespace>database_tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

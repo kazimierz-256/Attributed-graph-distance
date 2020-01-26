@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>c7d76648-2220-4f79-8f9e-768d0bec78e1</UserSecretsId>
+    <AssemblyName>Postgres Database</AssemblyName>
+    <RootNamespace>database</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LinqStatistics" Version="2.2.1" />
