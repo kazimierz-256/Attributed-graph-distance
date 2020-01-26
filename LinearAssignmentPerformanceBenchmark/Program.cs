@@ -8,7 +8,7 @@ namespace LinearAssignmentPerformanceBenchmark
     {
         static void Main(string[] args)
         {
-            double[,] generateRandomMatrix(int n)
+            double[,] generateRandomMatrix(int n, int k)
             {
                 var random = new Random();
                 var matrix = new double[n, n];
@@ -16,7 +16,7 @@ namespace LinearAssignmentPerformanceBenchmark
                 {
                     for (int j = 0; j < n; j++)
                     {
-                        matrix[i, j] = Math.Log(Math.Cos(i) + 2) / Math.Pow(3 + Math.Sin(j) + Math.Sin(i), 2);
+                        matrix[i, j] = Math.Log(Math.Cos(i+k) + 2) / Math.Pow(3 + Math.Sin(j-k) + Math.Sin(i-k), 2);
                     }
                 }
                 return matrix;
@@ -24,20 +24,24 @@ namespace LinearAssignmentPerformanceBenchmark
 
             var n = 50;
             var stopwatch = new Stopwatch();
+            var matrices = new double[n*n][,];
+            for (int i = 0; i < n*n; i++)
+            {
+                matrices[i] = generateRandomMatrix(n, i);
+            }
             stopwatch.Start();
-            //for (int i = 0; i < n * n; i++)
-            //{
-            var matrix = generateRandomMatrix(n);
-            var result = LAPSolver.Solve(matrix);
-            //}
+            for (int i = 0; i < n*n; i++)
+            {
+                var result = LAPSolver.SolveAssignment(matrices[i]);
+            }
             stopwatch.Stop();
             Console.WriteLine(stopwatch.Elapsed.TotalSeconds);
-            var sum = 0.0;
-            for (int i = 0; i < n; i++)
-            {
-                sum += matrix[i, result[i]];
-            }
-            Console.WriteLine(sum);
+            //var sum = 0.0;
+            //for (int i = 0; i < n; i++)
+            //{
+            //    sum += matrices[i, result[i]];
+            //}
+            //Console.WriteLine(sum);
         }
     }
 }
