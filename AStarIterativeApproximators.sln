@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinearAssignmentSolver", "L
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinearAssignmentPerformanceBenchmark", "LinearAssignmentPerformanceBenchmark\LinearAssignmentPerformanceBenchmark.csproj", "{8ED8F1CF-0AD6-41E7-8F81-2B8E4C9F4B87}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "database_csharp", "database_csharp\database_csharp.csproj", "{397E6731-EB32-4723-9CBD-B67D5B91B4DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Postgres_enron_database", "Postgres_enron_database\Postgres_enron_database.csproj", "{397E6731-EB32-4723-9CBD-B67D5B91B4DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "database_csharp_tests", "database_csharp_tests\database_csharp_tests.csproj", "{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Postgres_enron_database_tests", "Postgres_enron_database_tests\Postgres_enron_database_tests.csproj", "{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Experimental", "Experimental\Experimental.csproj", "{D4675247-AFBD-40C5-B1EC-AE7FB16C134D}"
 EndProject
