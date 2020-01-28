@@ -10,6 +10,7 @@
     <ProjectReference Include="..\AStar\AStar.csproj" />
     <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
     <ProjectReference Include="..\RandomGraphProvider\RandomGraphProvider.csproj" />
+    <ProjectReference Include="..\KNNClassifier\KNNClassifier.csproj" />
   </ItemGroup>
 
 </Project>
