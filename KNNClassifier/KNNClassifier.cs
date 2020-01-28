@@ -10,18 +10,18 @@ namespace KNNClassifier
         public static int Classify<V, VA, EA>(
                 int k,
                 Graph<V, VA, EA> G,
-                List<(Graph<V, VA, EA>, int)> graphsPreclassified,
+                ICollection<(Graph<V, VA, EA>, int)> graphsPreclassified,
                 Func<VA, VA, double> vertexAttributeMetric,
                 Func<EA, EA, double> edgeAttributeMetric,
-                List<double> a,
-                List<double> b,
+                ICollection<double> a,
+                ICollection<double> b,
                 GraphEncodingMethod encodingMethod = GraphEncodingMethod.Wojciechowski)
         {
             // determine distances between G and H graphs
             var distancesClasses = new List<(double, int)>();
-            for (int i = 0; i < graphsPreclassified.Count; i++)
+
+            foreach (var (H, classID) in graphsPreclassified)
             {
-                var (H, classID) = graphsPreclassified[i];
                 var matching = new VertexPartialMatchingNode<V, VA, EA>(
                     G,
                     H,
@@ -35,9 +35,11 @@ namespace KNNClassifier
                 distancesClasses.Add((matching.LowerBound, classID));
             }
 
-            // choose k closest graphs
+            // determine the k closest graphs to G
             distancesClasses.Sort((pair1, pair2) => pair1.Item1.CompareTo(pair2.Item1));
             var classCount = new Dictionary<int, int>();
+            
+            // TODO: what if k+1th element and beyond have the same distance as kth element?
             for (int i = 0; i < k; i++)
             {
                 var (H, classID) = distancesClasses[i];
@@ -50,9 +52,11 @@ namespace KNNClassifier
                     classCount.Add(i, 1);
                 }
             }
-            // determine the class of G
+
+            // determine the class of G (most frequently occuring within the k closest graphs)
             var majorityClass = -1;
             var majorityCount = -1;
+
             foreach (var kvp in classCount)
             {
                 if (kvp.Value > majorityCount)
@@ -61,6 +65,7 @@ namespace KNNClassifier
                     majorityClass = kvp.Key;
                 }
             }
+
             return majorityClass;
         }
     }
