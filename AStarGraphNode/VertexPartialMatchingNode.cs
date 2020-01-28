@@ -41,7 +41,7 @@ namespace AStarGraphNode
             var infinity = double.PositiveInfinity;
 
             var gVerticesKVP = G.Vertices.ToList();
-            var hVerticesKVP = G.Vertices.ToList();
+            var hVerticesKVP = H.Vertices.ToList();
 
             // TODO: take into account preassignedVertices, definitely create smaller cost matrix
             switch (encodingMethod)
@@ -56,7 +56,7 @@ namespace AStarGraphNode
                         (graph1, graph2, e1, e2) =>
                         {
                             var g1Contains = graph1.ContainsEdge(e1);
-                            var g2Contains = graph1.ContainsEdge(e2);
+                            var g2Contains = graph2.ContainsEdge(e2);
                             if (g1Contains)
                             {
                                 if (g2Contains)
