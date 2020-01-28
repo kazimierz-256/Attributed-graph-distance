@@ -58,6 +58,7 @@ namespace AStarGraphNode
                                 // fill in vertex replacement costs
                                 for (int v = 0; v < G.VertexCount; v++)
                                 {
+                                    // attribute of a vertex
                                     var vAttribute = gVerticesKVP[v].Value;
                                     for (int fv = 0; fv < H.VertexCount; fv++)
                                     {
@@ -83,7 +84,7 @@ namespace AStarGraphNode
                                             {
                                                 // attribute of a vertex
                                                 var gwAttribute = hVerticesKVP[gw].Value;
-                                                
+
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
                                                 var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
@@ -91,9 +92,9 @@ namespace AStarGraphNode
 
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1-a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
                                                 + b * edgeRelabel(vwAttribute, fvgwAttribute)
-                                                + (1-b) * edgeRelabel(wvAttribute, gwfvAttribute);
+                                                + (1 - b) * edgeRelabel(wvAttribute, gwfvAttribute);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -105,7 +106,7 @@ namespace AStarGraphNode
                                             {
                                                 // attribute of a vertex
                                                 var gwAttribute = hVerticesKVP[gw].Value;
-                                                
+
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
                                                 var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
@@ -113,15 +114,15 @@ namespace AStarGraphNode
 
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1-a) / m * vertexAdd(gwAttribute)
+                                                + (1 - a) / m * vertexAdd(gwAttribute)
                                                 + b * edgeAdd(fvgwAttribute)
-                                                + (1-b) * edgeAdd(gwfvAttribute);
+                                                + (1 - b) * edgeAdd(gwfvAttribute);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
                                         }
 
-                                        
+
                                         for (int w = 0; w < G.VertexCount; w++)
                                         {
                                             // attribute of a vertex
@@ -137,9 +138,9 @@ namespace AStarGraphNode
                                             {
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1-a) / m * vertexRemove(wAttribute)
+                                                + (1 - a) / m * vertexRemove(wAttribute)
                                                 + b * edgeRemove(vwAttribute)
-                                                + (1-b) * edgeRemove(wvAttribute);
+                                                + (1 - b) * edgeRemove(wvAttribute);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -154,18 +155,163 @@ namespace AStarGraphNode
                                 // fill in vertex adding (to G) costs
                                 for (int v = G.VertexCount; v < m; v++)
                                 {
-                                    for (int f_v = 0; f_v < H.VertexCount; f_v++)
+                                    for (int fv = 0; fv < H.VertexCount; fv++)
                                     {
-                                        throw new NotImplementedException();
+                                        // attribute of a vertex
+                                        var fvAttribute = hVerticesKVP[fv].Value;
+
+                                        // local cost matrix
+                                        var edgeCostArray = new double[m, m];
+
+
+                                        for (int w = 0; w < G.VertexCount; w++)
+                                        {
+                                            // attribute of a vertex
+                                            var wAttribute = gVerticesKVP[w].Value;
+
+                                            for (int gw = 0; gw < H.VertexCount; gw++)
+                                            {
+                                                // attribute of a vertex
+                                                var gwAttribute = hVerticesKVP[gw].Value;
+
+                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                                var fvgwAttribute = G[fvgwEdge];
+                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+                                                var gwfvAttribute = G[gwfvEdge];
+
+                                                var cost =
+                                                a / m * vertexAdd(fvAttribute)
+                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                                + b * edgeAdd(fvgwAttribute)
+                                                + (1 - b) * edgeAdd(gwfvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        for (int w = G.VertexCount; w < m; w++)
+                                        {
+                                            for (int gw = 0; gw < H.VertexCount; gw++)
+                                            {
+                                                // attribute of a vertex
+                                                var gwAttribute = hVerticesKVP[gw].Value;
+
+                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                                var fvgwAttribute = G[fvgwEdge];
+                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+                                                var gwfvAttribute = G[gwfvEdge];
+
+                                                var cost =
+                                                a / m * vertexAdd(fvAttribute)
+                                                + (1 - a) / m * vertexAdd(gwAttribute)
+                                                + b * edgeAdd(fvgwAttribute)
+                                                + (1 - b) * edgeAdd(gwfvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+
+                                        for (int w = 0; w < G.VertexCount; w++)
+                                        {
+                                            // attribute of a vertex
+                                            var wAttribute = gVerticesKVP[w].Value;
+
+                                            for (int gw = H.VertexCount; gw < m; gw++)
+                                            {
+                                                var cost =
+                                                a / m * vertexAdd(fvAttribute)
+                                                + (1 - a) / m * vertexRemove(wAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
 
                                 // fill in vertex removal (from G) costs
                                 for (int v = 0; v < G.VertexCount; v++)
                                 {
-                                    for (int f_v = H.VertexCount; f_v < m; f_v++)
+                                    // attribute of a vertex
+                                    var vAttribute = gVerticesKVP[v].Value;
+                                    for (int fv = H.VertexCount; fv < m; fv++)
                                     {
-                                        throw new NotImplementedException();
+                                        // local cost matrix
+                                        var edgeCostArray = new double[m, m];
+
+
+                                        for (int w = 0; w < G.VertexCount; w++)
+                                        {
+                                            // attribute of a vertex
+                                            var wAttribute = gVerticesKVP[w].Value;
+
+                                            // attributes of edges in both directions
+                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                            var vwAttribute = G[vwEdge];
+                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+                                            var wvAttribute = G[wvEdge];
+
+                                            for (int gw = 0; gw < H.VertexCount; gw++)
+                                            {
+                                                // attribute of a vertex
+                                                var gwAttribute = hVerticesKVP[gw].Value;
+
+                                                var cost =
+                                                a / m * vertexRemove(vAttribute)
+                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                                + b * edgeRemove(vwAttribute)
+                                                + (1 - b) * edgeRemove(wvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        for (int w = G.VertexCount; w < m; w++)
+                                        {
+                                            for (int gw = 0; gw < H.VertexCount; gw++)
+                                            {
+                                                // attribute of a vertex
+                                                var gwAttribute = hVerticesKVP[gw].Value;
+
+                                                var cost =
+                                                a / m * vertexRemove(vAttribute)
+                                                + (1 - a) / m * vertexAdd(gwAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+
+                                        for (int w = 0; w < G.VertexCount; w++)
+                                        {
+                                            // attribute of a vertex
+                                            var wAttribute = gVerticesKVP[w].Value;
+
+                                            // attributes of edges in both directions
+                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                            var vwAttribute = G[vwEdge];
+                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+                                            var wvAttribute = G[wvEdge];
+
+                                            for (int gw = H.VertexCount; gw < m; gw++)
+                                            {
+                                                var cost =
+                                                a / m * vertexRemove(vAttribute)
+                                                + (1 - a) / m * vertexRemove(wAttribute)
+                                                + b * edgeRemove(vwAttribute)
+                                                + (1 - b) * edgeRemove(wvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
 
