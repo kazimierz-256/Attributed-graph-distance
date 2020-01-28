@@ -12,6 +12,39 @@ namespace AStarGraphNode
         private readonly Graph<V, VA, EA> G;
         private readonly Graph<V, VA, EA> H;
         private readonly List<(V, V)> preassignedVertices;
+
+        public int CompareTo(object obj)
+        {
+            var node = (INode)obj;
+            if (node == null)
+                throw new Exception("Incompatible node type");
+            return this.LowerBound.CompareTo(node.LowerBound);
+        }
+        List<INode> INode.Expand()
+        {
+            // expand along some unassigned vertex
+            throw new NotImplementedException();
+        }
+
+        public Dictionary<(double, double), double> abLowerBounds = new Dictionary<(double, double), double>();
+        public Dictionary<(double, double), double> abUpperBounds = new Dictionary<(double, double), double>();
+
+        public double LowerBound
+        {
+            get;
+            private set;
+        }
+
+        public double UpperBound
+        {
+            get;
+            private set;
+        }
+
+        public double BestLowerBoundA { get; private set; }
+        public double BestLowerBoundB { get; private set; }
+        public double BestUpperBoundA { get; private set; }
+        public double BestUpperBoundB { get; private set; }
         public VertexPartialMatchingNode(
                 Graph<V, VA, EA> G,
                 Graph<V, VA, EA> H,
@@ -50,7 +83,10 @@ namespace AStarGraphNode
                     {
                         var m = Math.Max(G.VertexCount, H.VertexCount);
                         costMatrix = new double[m, m];
-                        var maximumAssignment = double.NegativeInfinity;
+                        var bestLowerBound = double.NegativeInfinity;
+                        var bestUpperBound = double.PositiveInfinity;
+                        int[] bestLowerBoundAssignment;
+                        int[] bestUpperBoundAssignment;
 
                         Func<Graph<V, VA, EA>, Graph<V, VA, EA>, (V, V), (V, V), double> edgeRelabelRobust =
                         (graph1, graph2, e1, e2) =>
@@ -107,7 +143,7 @@ namespace AStarGraphNode
                                         var fvAttribute = hVerticesKVP[fv].Value;
 
                                         // local cost matrix
-                                        var edgeCostArray = new double[m, m];
+                                        var localCostMatrix = new double[m, m];
 
 
                                         for (int w = 0; w < G.VertexCount; w++)
@@ -133,7 +169,7 @@ namespace AStarGraphNode
                                                 + b * edgeRelabelRobust(G, H, vwEdge, fvgwEdge)
                                                 + (1 - b) * edgeRelabelRobust(G, H, wvEdge, gwfvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -153,7 +189,7 @@ namespace AStarGraphNode
                                                 + b * edgeAddRobust(H, fvgwEdge)
                                                 + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -175,12 +211,12 @@ namespace AStarGraphNode
                                                 + b * edgeRemoveRobust(G, vwEdge)
                                                 + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
                                         costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
@@ -194,7 +230,7 @@ namespace AStarGraphNode
                                         var fvAttribute = hVerticesKVP[fv].Value;
 
                                         // local cost matrix
-                                        var edgeCostArray = new double[m, m];
+                                        var localCostMatrix = new double[m, m];
 
 
                                         for (int w = 0; w < G.VertexCount; w++)
@@ -216,7 +252,7 @@ namespace AStarGraphNode
                                                 + b * edgeAddRobust(H, fvgwEdge)
                                                 + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -236,7 +272,7 @@ namespace AStarGraphNode
                                                 + b * edgeAddRobust(H, fvgwEdge)
                                                 + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -252,12 +288,12 @@ namespace AStarGraphNode
                                                 a / m * vertexAdd(fvAttribute)
                                                 + (1 - a) / m * vertexRemove(wAttribute);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
                                         costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
@@ -270,7 +306,7 @@ namespace AStarGraphNode
                                     for (int fv = H.VertexCount; fv < m; fv++)
                                     {
                                         // local cost matrix
-                                        var edgeCostArray = new double[m, m];
+                                        var localCostMatrix = new double[m, m];
 
 
                                         for (int w = 0; w < G.VertexCount; w++)
@@ -293,7 +329,7 @@ namespace AStarGraphNode
                                                 + b * edgeRemoveRobust(G, vwEdge)
                                                 + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -308,7 +344,7 @@ namespace AStarGraphNode
                                                 a / m * vertexRemove(vAttribute)
                                                 + (1 - a) / m * vertexAdd(gwAttribute);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
@@ -330,28 +366,113 @@ namespace AStarGraphNode
                                                 + b * edgeRemoveRobust(G, vwEdge)
                                                 + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
-                                                edgeCostArray[w, gw] = cost;
+                                                localCostMatrix[w, gw] = cost;
                                             }
                                         }
 
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
                                         costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
 
-
+                                // lower bound estimate
                                 var abAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
                                 var abAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, abAssignment);
-                                if (abAssignmentCost > maximumAssignment)
+                                if (abAssignmentCost > bestLowerBound)
                                 {
-                                    maximumAssignment = abAssignmentCost;
+                                    bestLowerBound = abAssignmentCost;
+                                    bestLowerBoundAssignment = abAssignment;
+                                    BestLowerBoundA = a;
+                                    BestLowerBoundB = b;
+                                    LowerBound = bestLowerBound;
                                 }
+
+                                // upper bound estimate
+                                var realAssignmentCost = 0d;
+                                for (int v = 0; v < G.VertexCount; v++)
+                                {
+                                    var fv = abAssignment[v];
+                                    if (fv < H.VertexCount)
+                                    {
+                                        realAssignmentCost += vertexRelabel(gVerticesKVP[v].Value, hVerticesKVP[fv].Value);
+                                    }
+                                    else
+                                    {
+                                        realAssignmentCost += vertexAdd(gVerticesKVP[v].Value);
+
+                                    }
+                                    for (int w = 0; w < G.VertexCount; w++)
+                                    {
+                                        if (abAssignment[w] < H.VertexCount)
+                                        {
+                                            realAssignmentCost += edgeRelabelRobust(
+                                                G,
+                                                H,
+                                                (gVerticesKVP[v].Key, gVerticesKVP[w].Key),
+                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
+                                            );
+                                        }
+                                        else
+                                        {
+                                            realAssignmentCost += edgeRemoveRobust(
+                                                G,
+                                                (gVerticesKVP[v].Key, gVerticesKVP[w].Key)
+                                            );
+                                        }
+                                    }
+                                    for (int w = G.VertexCount; w < m; w++)
+                                    {
+                                        if (abAssignment[w] < H.VertexCount)
+                                        {
+                                            realAssignmentCost += edgeAddRobust(
+                                                H,
+                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
+                                            );
+                                        }
+                                    }
+                                }
+                                for (int v = G.VertexCount; v < m; v++)
+                                {
+                                    var fv = abAssignment[v];
+                                    if (fv < H.VertexCount)
+                                    {
+                                        realAssignmentCost += vertexRemove(hVerticesKVP[fv].Value);
+                                    }
+                                    for (int w = 0; w < G.VertexCount; w++)
+                                    {
+                                        if (abAssignment[w] < H.VertexCount)
+                                        {
+                                            realAssignmentCost += edgeAddRobust(
+                                                H,
+                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
+                                            );
+                                        }
+                                    }
+                                    for (int w = G.VertexCount; w < m; w++)
+                                    {
+                                        if (abAssignment[w] < H.VertexCount)
+                                        {
+                                            realAssignmentCost += edgeAddRobust(
+                                                H,
+                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
+                                            );
+                                        }
+                                    }
+                                }
+                                if (realAssignmentCost < bestUpperBound)
+                                {
+                                    bestUpperBound = realAssignmentCost;
+                                    bestUpperBoundAssignment = abAssignment;
+                                    BestUpperBoundA = a;
+                                    BestUpperBoundB = b;
+                                    UpperBound = bestUpperBound;
+                                }
+                                
+                                abLowerBounds.Add((a, b), abAssignmentCost);
+                                abUpperBounds.Add((a, b), realAssignmentCost);
                             }
                         }
-                        LowerBound = maximumAssignment;
-                        // TODO: compute the upper bound cost from the approximate assignment
-                        UpperBound = double.NaN;
                         break;
                     }
                 case GraphEncodingMethod.RiesenBunke:
@@ -359,37 +480,13 @@ namespace AStarGraphNode
                         var m = G.VertexCount + H.VertexCount;
                         costMatrix = new double[m, m];
 
+                        throw new NotImplementedException();
                         // TODO: assign LowerBound and UpperBound
                         break;
                     }
                 default:
                     throw new Exception("Unknown graph encoding method");
             }
-        }
-
-        public int CompareTo(object obj)
-        {
-            var node = (INode)obj;
-            if (node == null)
-                throw new Exception("Incompatible node type");
-            return this.LowerBound.CompareTo(node.LowerBound);
-        }
-        List<INode> INode.Expand()
-        {
-            // expand along some unassigned vertex
-            throw new NotImplementedException();
-        }
-
-        public double LowerBound
-        {
-            get;
-            private set;
-        }
-
-        public double UpperBound
-        {
-            get;
-            private set;
         }
     }
 }
