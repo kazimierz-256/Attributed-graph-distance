@@ -5,8 +5,8 @@ namespace AttributedGraph
 {
     public class Graph<V, VA, EA>
     {
-        private readonly Dictionary<V, VA> vertices = new Dictionary<V, VA>();
-        private readonly Dictionary<(V, V), EA> edges = new Dictionary<(V, V), EA>();
+        public readonly Dictionary<V, VA> Vertices = new Dictionary<V, VA>();
+        public readonly Dictionary<(V, V), EA> Edges = new Dictionary<(V, V), EA>();
         private readonly bool directed;
 
         public Graph(bool directed)
@@ -15,54 +15,54 @@ namespace AttributedGraph
         }
         public void AddEdge((V, V) edge, EA edgeAttribute)
         {
-            edges.Add(edge, edgeAttribute);
+            Edges.Add(edge, edgeAttribute);
             if (!directed)
             {
                 var (u, v) = edge;
-                edges.Add((v, u), edgeAttribute);
+                Edges.Add((v, u), edgeAttribute);
             }
         }
         public void RemoveEdge((V, V) edge)
-            => edges.Remove(edge);
+            => Edges.Remove(edge);
         public bool ContainsEdge((V, V) edge)
-            => edges.ContainsKey(edge);
+            => Edges.ContainsKey(edge);
         public void AddVertex(V vertex, VA vertexAttribute)
-            => vertices.Add(vertex, vertexAttribute);
+            => Vertices.Add(vertex, vertexAttribute);
         public void RemoveVertex(V vertex)
-            => vertices.Remove(vertex);
+            => Vertices.Remove(vertex);
         public bool ContainsVertex(V vertex)
-            => vertices.ContainsKey(vertex);
+            => Vertices.ContainsKey(vertex);
 
-        public int VertexCount => vertices.Count;
-        public int EdgeCount => edges.Count;
+        public int VertexCount => Vertices.Count;
+        public int EdgeCount => Edges.Count;
         public VA this[V vertex]
         {
-            get { return vertices[vertex]; }
+            get { return Vertices[vertex]; }
             set
             {
-                if (!vertices.ContainsKey(vertex))
-                    vertices.Add(vertex, value);
+                if (!Vertices.ContainsKey(vertex))
+                    Vertices.Add(vertex, value);
                 else
-                    vertices[vertex] = value;
+                    Vertices[vertex] = value;
             }
         }
         public EA this[(V, V) edge]
         {
-            get { return edges[edge]; }
+            get { return Edges[edge]; }
             set
             {
                 var (u, v) = edge;
-                if (!edges.ContainsKey(edge))
+                if (!Edges.ContainsKey(edge))
                 {
-                    edges.Add(edge, value);
+                    Edges.Add(edge, value);
                     if (!directed)
-                        edges.Add((v, u), value);
+                        Edges.Add((v, u), value);
                 }
                 else
                 {
-                    edges[edge] = value;
+                    Edges[edge] = value;
                     if (!directed)
-                        edges[(v, u)] = value;
+                        Edges[(v, u)] = value;
                 }
             }
         }
