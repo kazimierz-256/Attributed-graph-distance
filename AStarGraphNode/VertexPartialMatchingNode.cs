@@ -51,6 +51,47 @@ namespace AStarGraphNode
                         var m = Math.Max(G.VertexCount, H.VertexCount);
                         costMatrix = new double[m, m];
                         var maximumAssignment = double.NegativeInfinity;
+
+                        Func<Graph<V, VA, EA>, Graph<V, VA, EA>, (V, V), (V, V), double> edgeRelabelRobust =
+                        (graph1, graph2, e1, e2) =>
+                        {
+                            var g1Contains = graph1.ContainsEdge(e1);
+                            var g2Contains = graph1.ContainsEdge(e2);
+                            if (g1Contains)
+                            {
+                                if (g2Contains)
+                                    return edgeRelabel(graph1[e1], graph2[e2]);
+                                else
+                                    return edgeRemove(graph1[e1]);
+                            }
+                            else if (g2Contains)
+                            {
+                                return edgeAdd(graph2[e2]);
+                            }
+                            else
+                            {
+                                return 0;
+                            }
+                        };
+
+                        Func<Graph<V, VA, EA>, (V, V), double> edgeAddRobust =
+                        (graph, e) =>
+                        {
+                            if (graph.ContainsEdge(e))
+                                return edgeAdd(graph[e]);
+                            else
+                                return 0;
+                        };
+
+                        Func<Graph<V, VA, EA>, (V, V), double> edgeRemoveRobust =
+                        (graph, e) =>
+                        {
+                            if (graph.ContainsEdge(e))
+                                return edgeRemove(graph[e]);
+                            else
+                                return 0;
+                        };
+
                         foreach (var a in aCollection)
                         {
                             foreach (var b in bCollection)
@@ -76,9 +117,7 @@ namespace AStarGraphNode
 
                                             // attributes of edges in both directions
                                             var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var vwAttribute = G[vwEdge];
                                             var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-                                            var wvAttribute = G[wvEdge];
 
                                             for (int gw = 0; gw < H.VertexCount; gw++)
                                             {
@@ -86,15 +125,13 @@ namespace AStarGraphNode
                                                 var gwAttribute = hVerticesKVP[gw].Value;
 
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-                                                var gwfvAttribute = G[gwfvEdge];
 
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
                                                 + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeRelabel(vwAttribute, fvgwAttribute)
-                                                + (1 - b) * edgeRelabel(wvAttribute, gwfvAttribute);
+                                                + b * edgeRelabelRobust(G, H, vwEdge, fvgwEdge)
+                                                + (1 - b) * edgeRelabelRobust(G, H, wvEdge, gwfvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -108,15 +145,13 @@ namespace AStarGraphNode
                                                 var gwAttribute = hVerticesKVP[gw].Value;
 
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-                                                var gwfvAttribute = G[gwfvEdge];
 
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
                                                 + (1 - a) / m * vertexAdd(gwAttribute)
-                                                + b * edgeAdd(fvgwAttribute)
-                                                + (1 - b) * edgeAdd(gwfvAttribute);
+                                                + b * edgeAddRobust(H, fvgwEdge)
+                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -130,17 +165,15 @@ namespace AStarGraphNode
 
                                             // attributes of edges in both directions
                                             var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var vwAttribute = G[vwEdge];
                                             var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-                                            var wvAttribute = G[wvEdge];
 
                                             for (int gw = H.VertexCount; gw < m; gw++)
                                             {
                                                 var cost =
                                                 a / m * vertexRelabel(vAttribute, fvAttribute)
                                                 + (1 - a) / m * vertexRemove(wAttribute)
-                                                + b * edgeRemove(vwAttribute)
-                                                + (1 - b) * edgeRemove(wvAttribute);
+                                                + b * edgeRemoveRobust(G, vwEdge)
+                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -175,15 +208,13 @@ namespace AStarGraphNode
                                                 var gwAttribute = hVerticesKVP[gw].Value;
 
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-                                                var gwfvAttribute = G[gwfvEdge];
 
                                                 var cost =
                                                 a / m * vertexAdd(fvAttribute)
                                                 + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeAdd(fvgwAttribute)
-                                                + (1 - b) * edgeAdd(gwfvAttribute);
+                                                + b * edgeAddRobust(H, fvgwEdge)
+                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -197,15 +228,13 @@ namespace AStarGraphNode
                                                 var gwAttribute = hVerticesKVP[gw].Value;
 
                                                 var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var fvgwAttribute = G[fvgwEdge];
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-                                                var gwfvAttribute = G[gwfvEdge];
 
                                                 var cost =
                                                 a / m * vertexAdd(fvAttribute)
                                                 + (1 - a) / m * vertexAdd(gwAttribute)
-                                                + b * edgeAdd(fvgwAttribute)
-                                                + (1 - b) * edgeAdd(gwfvAttribute);
+                                                + b * edgeAddRobust(H, fvgwEdge)
+                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -251,9 +280,7 @@ namespace AStarGraphNode
 
                                             // attributes of edges in both directions
                                             var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var vwAttribute = G[vwEdge];
                                             var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-                                            var wvAttribute = G[wvEdge];
 
                                             for (int gw = 0; gw < H.VertexCount; gw++)
                                             {
@@ -263,8 +290,8 @@ namespace AStarGraphNode
                                                 var cost =
                                                 a / m * vertexRemove(vAttribute)
                                                 + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeRemove(vwAttribute)
-                                                + (1 - b) * edgeRemove(wvAttribute);
+                                                + b * edgeRemoveRobust(G, vwEdge)
+                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
@@ -293,17 +320,15 @@ namespace AStarGraphNode
 
                                             // attributes of edges in both directions
                                             var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var vwAttribute = G[vwEdge];
                                             var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-                                            var wvAttribute = G[wvEdge];
 
                                             for (int gw = H.VertexCount; gw < m; gw++)
                                             {
                                                 var cost =
                                                 a / m * vertexRemove(vAttribute)
                                                 + (1 - a) / m * vertexRemove(wAttribute)
-                                                + b * edgeRemove(vwAttribute)
-                                                + (1 - b) * edgeRemove(wvAttribute);
+                                                + b * edgeRemoveRobust(G, vwEdge)
+                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
