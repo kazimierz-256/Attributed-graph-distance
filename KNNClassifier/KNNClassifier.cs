@@ -2,12 +2,13 @@
 using AStarGraphNode;
 using System.Collections.Generic;
 using AttributedGraph;
+using System.Linq;
 
 namespace KNNClassifier
 {
     public class KNNClassifier
     {
-        public static int Classify<V, VA, EA>(
+        public static (int, List<(VertexPartialMatchingNode<V, VA, EA>, int)>) Classify<V, VA, EA>(
                 int k,
                 Graph<V, VA, EA> G,
                 ICollection<(Graph<V, VA, EA>, int)> graphsPreclassified,
@@ -22,7 +23,7 @@ namespace KNNClassifier
                 GraphEncodingMethod encodingMethod = GraphEncodingMethod.Wojciechowski)
         {
             // determine distances between G and H graphs
-            var distancesClasses = new List<(double, int)>();
+            var matchingClassPairs = new List<(VertexPartialMatchingNode<V, VA, EA>, int)>();
 
             foreach (var (H, classID) in graphsPreclassified)
             {
@@ -40,17 +41,18 @@ namespace KNNClassifier
                     encodingMethod: encodingMethod
                 );
 
-                distancesClasses.Add((matching.LowerBound, classID));
+                matchingClassPairs.Add((matching, classID));
             }
 
             // determine the k closest graphs to G
-            distancesClasses.Sort((pair1, pair2) => pair1.Item1.CompareTo(pair2.Item1));
+            matchingClassPairs.Sort((pair1, pair2) => pair1.Item1.LowerBound.CompareTo(pair2.Item1.LowerBound));
+
             var classCount = new Dictionary<int, int>();
 
-            var fixedK = Math.Min(k, distancesClasses.Count);
+            var fixedK = Math.Min(k, matchingClassPairs.Count);
             for (int i = 0; ;)
             {
-                var (H, classID) = distancesClasses[i];
+                var (H, classID) = matchingClassPairs[i];
                 if (classCount.ContainsKey(classID))
                 {
                     classCount[classID] += 1;
@@ -64,7 +66,7 @@ namespace KNNClassifier
                 i += 1;
                 if (i >= fixedK)
                 {
-                    if (i < distancesClasses.Count && distancesClasses[i] == distancesClasses[fixedK - 1])
+                    if (i < matchingClassPairs.Count && matchingClassPairs[i].Item1.LowerBound == matchingClassPairs[fixedK - 1].Item1.LowerBound)
                     {
                         continue;
                     }
@@ -88,7 +90,7 @@ namespace KNNClassifier
                 }
             }
 
-            return majorityClass;
+            return (majorityClass, matchingClassPairs);
         }
     }
 }
