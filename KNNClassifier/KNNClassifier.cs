@@ -46,18 +46,32 @@ namespace KNNClassifier
             // determine the k closest graphs to G
             distancesClasses.Sort((pair1, pair2) => pair1.Item1.CompareTo(pair2.Item1));
             var classCount = new Dictionary<int, int>();
-            
-            // TODO: what if k+1th element and beyond have the same distance as kth element?
-            for (int i = 0; i < k; i++)
+
+            var fixedK = Math.Min(k, distancesClasses.Count);
+            for (int i = 0; ;)
             {
                 var (H, classID) = distancesClasses[i];
                 if (classCount.ContainsKey(classID))
                 {
-                    classCount[i] += 1;
+                    classCount[classID] += 1;
                 }
                 else
                 {
-                    classCount.Add(i, 1);
+                    classCount.Add(classID, 1);
+                }
+
+                // stop if the following graphs have index > k and they are farther from the query graph
+                i += 1;
+                if (i >= fixedK)
+                {
+                    if (i < distancesClasses.Count && distancesClasses[i] == distancesClasses[fixedK - 1])
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
