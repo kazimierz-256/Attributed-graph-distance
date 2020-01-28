@@ -42,8 +42,9 @@ namespace Experimental
                 vertexAttributeGenerator: vertexAttributeGenerator,
                 edgeAttributeGenerator: edgeAttributeGenerator
                 );
+            const int hGraphCount = 50;
+            
             var graphsPreclassified = new List<(Graph<int, double, double>, int)>();
-            const int hGraphCount = 100;
             for (int i = 0; i < hGraphCount; i++)
             {
                 var H = RandomGraphFactory.generateRandomInstance(
@@ -57,14 +58,16 @@ namespace Experimental
                 graphsPreclassified.Add((H, hClassID));
             }
 
-            var a = new List<double>() { -1, 2, 0, 1, .5 };
-            var b = new List<double>() { -1, 2, 0, 1, .5 };
+            // var a = new List<double>() { 0, 1, .5, 1d/3, 2d/3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
+            // var b = new List<double>() { 0, 1, .5, 1d/3, 2d/3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
+            var a = new List<double>() { 0, 1, .5};
+            var b = new List<double>() { 0, 1, .5};
 
             var k = 3;
 
             var encodingMethod = GraphEncodingMethod.Wojciechowski;
 
-            var gClassID = KNNClassifier.KNNClassifier.Classify<int, double, double>(
+            var (gClassID, matchingClassPairs) = KNNClassifier.KNNClassifier.Classify<int, double, double>(
                 k: k,
                 G,
                 graphsPreclassified,
@@ -80,6 +83,55 @@ namespace Experimental
             );
 
             System.Console.WriteLine($"Detected class: {gClassID}");
+            
+            var RiesenBunkeAB = (1,1);
+
+            var printouts = new List<(string, Func<VertexPartialMatchingNode<int, double, double>, int, string>)>()
+            {
+                (
+                    "Class: ",
+                    (matching, classID) => $"{classID} "
+                ),
+                (
+                    "My lower bound / theirs: ",
+                    (matching, classID) => $"{matching.LowerBound / matching.abLowerBounds[RiesenBunkeAB]:f2} "
+                ),
+                (
+                    "My lower bound / my upper bound: ",
+                    (matching, classID) => $"{matching.LowerBound / matching.UpperBound:f2}"
+                ),
+                (
+                    "Their lower bound / their upper bound: ",
+                    (matching, classID) => $"{matching.abLowerBounds[RiesenBunkeAB] / matching.abUpperBounds[RiesenBunkeAB]:f2}"
+                ),
+                (
+                    "Their upper bound / my upper bound: ",
+                    (matching, classID) => $"{matching.UpperBound / matching.abUpperBounds[RiesenBunkeAB]:f2}"
+                ),
+                (
+                    "My relative error, their relative error: ",
+                    (matching, classID) => $"{(matching.UpperBound - matching.LowerBound)/matching.LowerBound:f2} {(matching.abUpperBounds[RiesenBunkeAB] - matching.abLowerBounds[RiesenBunkeAB])/matching.abLowerBounds[RiesenBunkeAB]:f2}"
+                ),
+                (
+                    $"Best lower bound: ",
+                    (matching, classID) => $"A: {matching.BestLowerBoundA:f2} B: {matching.BestLowerBoundB:f2}"
+                ),
+                (
+                    $"Best upper bound: ",
+                    (matching, classID) => $"A: {matching.BestUpperBoundA:f2} B: {matching.BestUpperBoundB:f2}"
+                ),
+            };
+            foreach (var (prefixMessage, greenDescription) in printouts)
+            {
+                for (int i = 0; i < matchingClassPairs.Count; i++)
+                {
+                    System.Console.Write(prefixMessage);
+                    System.Console.ForegroundColor = ConsoleColor.Green;
+                    System.Console.Write(greenDescription(matchingClassPairs[i].Item1, matchingClassPairs[i].Item2));
+                    System.Console.ResetColor();
+                    System.Console.WriteLine();
+                }
+            }
         }
     }
 }
