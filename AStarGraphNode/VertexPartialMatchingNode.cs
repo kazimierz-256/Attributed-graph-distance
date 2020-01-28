@@ -89,12 +89,65 @@ namespace AStarGraphNode
                                                 var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
                                                 var gwfvAttribute = G[gwfvEdge];
 
-                                                var cost = a / m * vertexRelabel(vAttribute, fvAttribute) + (1-a) / m * vertexRelabel(wAttribute, gwAttribute) + b * edgeRelabel(vwAttribute, fvgwAttribute) + (1-b) * edgeRelabel(wvAttribute, gwfvAttribute);
+                                                var cost =
+                                                a / m * vertexRelabel(vAttribute, fvAttribute)
+                                                + (1-a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                                + b * edgeRelabel(vwAttribute, fvgwAttribute)
+                                                + (1-b) * edgeRelabel(wvAttribute, gwfvAttribute);
 
                                                 edgeCostArray[w, gw] = cost;
                                             }
                                         }
-                                        throw new NotImplementedException();
+
+                                        for (int w = G.VertexCount; w < m; w++)
+                                        {
+                                            for (int gw = 0; gw < H.VertexCount; gw++)
+                                            {
+                                                // attribute of a vertex
+                                                var gwAttribute = hVerticesKVP[gw].Value;
+                                                
+                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                                var fvgwAttribute = G[fvgwEdge];
+                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+                                                var gwfvAttribute = G[gwfvEdge];
+
+                                                var cost =
+                                                a / m * vertexRelabel(vAttribute, fvAttribute)
+                                                + (1-a) / m * vertexAdd(gwAttribute)
+                                                + b * edgeAdd(fvgwAttribute)
+                                                + (1-b) * edgeAdd(gwfvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        
+                                        for (int w = 0; w < G.VertexCount; w++)
+                                        {
+                                            // attribute of a vertex
+                                            var wAttribute = gVerticesKVP[w].Value;
+
+                                            // attributes of edges in both directions
+                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                            var vwAttribute = G[vwEdge];
+                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+                                            var wvAttribute = G[wvEdge];
+
+                                            for (int gw = H.VertexCount; gw < m; gw++)
+                                            {
+                                                var cost =
+                                                a / m * vertexRelabel(vAttribute, fvAttribute)
+                                                + (1-a) / m * vertexRemove(wAttribute)
+                                                + b * edgeRemove(vwAttribute)
+                                                + (1-b) * edgeRemove(wvAttribute);
+
+                                                edgeCostArray[w, gw] = cost;
+                                            }
+                                        }
+
+                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
+                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, localAssignment);
+                                        costMatrix[v, fv] = localAssignmentCost;
                                     }
                                 }
 
