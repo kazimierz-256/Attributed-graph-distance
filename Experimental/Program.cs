@@ -21,15 +21,19 @@ namespace Experimental
                 return random.NextDouble();
             };
 
-            Func<double, double, double> vertexAttributeMetric = (a1, a2) =>
+            Func<double, double, double> vertexRelabel = (a1, a2) =>
             {
                 return Math.Abs(a1 - a2);
             };
+            Func<double, double> vertexAdd = a => Math.Abs(a);
+            Func<double, double> vertexRemove = vertexAdd;
 
-            Func<double, double, double> edgeAttributeMetric = (a1, a2) =>
+            Func<double, double, double> edgeRelabel = (a1, a2) =>
             {
                 return Math.Abs(a1 - a2);
             };
+            Func<double, double> edgeAdd = a => Math.Abs(a);
+            Func<double, double> edgeRemove = edgeAdd;
 
             var G = RandomGraphFactory.generateRandomInstance(
                 vertices: 10,
@@ -64,8 +68,12 @@ namespace Experimental
                 k: k,
                 G,
                 graphsPreclassified,
-                vertexAttributeMetric,
-                edgeAttributeMetric,
+                vertexAdd,
+                vertexRelabel,
+                vertexRemove,
+                edgeAdd,
+                edgeRelabel,
+                edgeRemove,
                 a,
                 b,
                 encodingMethod: encodingMethod
