@@ -53,12 +53,6 @@ namespace Experimental
                 graphsPreclassified.Add((H, hClassID));
             }
 
-            var distanceDictionary = new Dictionary<(double, double), double>();
-            foreach (var (vertex, attribute) in G.Vertices)
-            {
-
-            }
-
             var a = new List<double>() { -1, 2, 0, 1, .5 };
             var b = new List<double>() { -1, 2, 0, 1, .5 };
 
