@@ -11,7 +11,7 @@ namespace Experimental
     {
         static void Main(string[] args)
         {
-            var random = new Random();
+            var random = new Random(3_14159265);
             Func<double> vertexAttributeGenerator = () =>
             {
                 return random.NextDouble();
