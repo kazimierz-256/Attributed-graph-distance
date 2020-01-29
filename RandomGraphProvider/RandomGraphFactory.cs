@@ -10,15 +10,17 @@ namespace RandomGraphProvider
                 double density,
                 bool directed,
                 Func<VA> vertexAttributeGenerator,
-                Func<EA> edgeAttributeGenerator
+                Func<EA> edgeAttributeGenerator,
+                Random random = null
             )
         {
             var graph = new Graph<int, VA, EA>(directed);
-            
+
             for (int i = 0; i < vertices; i++)
                 graph.AddVertex(i, vertexAttributeGenerator());
-            
-            var random = new Random();
+
+            if (random == null)
+                random = new Random();
             for (int i = 0; i < vertices; i++)
             {
                 var jstart = directed ? 0 : i;
