@@ -3,6 +3,6 @@ namespace AStarGraphNode
     public enum GraphEncodingMethod
     {
         Wojciechowski,
-        RiesenBunke
+        RiesenBunke2009
     }
 }
