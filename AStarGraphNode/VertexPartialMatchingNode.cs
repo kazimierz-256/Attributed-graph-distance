@@ -123,9 +123,10 @@ namespace AStarGraphNode
 
             // TODO: take into account preassignedVertices, definitely create smaller cost matrix
             int m = 0;
+            var max = Math.Max(G.VertexCount, H.VertexCount);
             if (encodingMethod == GraphEncodingMethod.Wojciechowski)
             {
-                m = Math.Max(G.VertexCount, H.VertexCount);
+                m = max;
                 costMatrix = new double[m, m];
             }
             else if (encodingMethod == GraphEncodingMethod.RiesenBunke)
@@ -177,8 +178,8 @@ namespace AStarGraphNode
                                     var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
 
                                     var cost =
-                                    a / m * vertexRelabel(vAttribute, fvAttribute)
-                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    a / max * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / max * vertexRelabel(wAttribute, gwAttribute)
                                     + b * edgeRelabelRobust(G, H, vwEdge, fvgwEdge)
                                     + (1 - b) * edgeRelabelRobust(G, H, wvEdge, gwfvEdge);
 
@@ -197,8 +198,8 @@ namespace AStarGraphNode
                                     var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
 
                                     var cost =
-                                    a / m * vertexRelabel(vAttribute, fvAttribute)
-                                    + (1 - a) / m * vertexAdd(gwAttribute)
+                                    a / max * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / max * vertexAdd(gwAttribute)
                                     + b * edgeAddRobust(H, fvgwEdge)
                                     + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
@@ -219,8 +220,8 @@ namespace AStarGraphNode
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
-                                    a / m * vertexRelabel(vAttribute, fvAttribute)
-                                    + (1 - a) / m * vertexRemove(wAttribute)
+                                    a / max * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / max * vertexRemove(wAttribute)
                                     + b * edgeRemoveRobust(G, vwEdge)
                                     + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
@@ -260,8 +261,8 @@ namespace AStarGraphNode
                                     var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
 
                                     var cost =
-                                    a / m * vertexAdd(fvAttribute)
-                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    a / max * vertexAdd(fvAttribute)
+                                    + (1 - a) / max * vertexRelabel(wAttribute, gwAttribute)
                                     + b * edgeAddRobust(H, fvgwEdge)
                                     + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
@@ -280,8 +281,8 @@ namespace AStarGraphNode
                                     var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
 
                                     var cost =
-                                    a / m * vertexAdd(fvAttribute)
-                                    + (1 - a) / m * vertexAdd(gwAttribute)
+                                    a / max * vertexAdd(fvAttribute)
+                                    + (1 - a) / max * vertexAdd(gwAttribute)
                                     + b * edgeAddRobust(H, fvgwEdge)
                                     + (1 - b) * edgeAddRobust(H, gwfvEdge);
 
@@ -298,8 +299,8 @@ namespace AStarGraphNode
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
-                                    a / m * vertexAdd(fvAttribute)
-                                    + (1 - a) / m * vertexRemove(wAttribute);
+                                    a / max * vertexAdd(fvAttribute)
+                                    + (1 - a) / max * vertexRemove(wAttribute);
 
                                     localCostMatrix[w, gw] = cost;
                                 }
@@ -343,8 +344,8 @@ namespace AStarGraphNode
                                     var gwAttribute = hVerticesKVP[gw].Value;
 
                                     var cost =
-                                    a / m * vertexRemove(vAttribute)
-                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    a / max * vertexRemove(vAttribute)
+                                    + (1 - a) / max * vertexRelabel(wAttribute, gwAttribute)
                                     + b * edgeRemoveRobust(G, vwEdge)
                                     + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
@@ -360,8 +361,8 @@ namespace AStarGraphNode
                                     var gwAttribute = hVerticesKVP[gw].Value;
 
                                     var cost =
-                                    a / m * vertexRemove(vAttribute)
-                                    + (1 - a) / m * vertexAdd(gwAttribute);
+                                    a / max * vertexRemove(vAttribute)
+                                    + (1 - a) / max * vertexAdd(gwAttribute);
 
                                     localCostMatrix[w, gw] = cost;
                                 }
@@ -380,8 +381,8 @@ namespace AStarGraphNode
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
-                                    a / m * vertexRemove(vAttribute)
-                                    + (1 - a) / m * vertexRemove(wAttribute)
+                                    a / max * vertexRemove(vAttribute)
+                                    + (1 - a) / max * vertexRemove(wAttribute)
                                     + b * edgeRemoveRobust(G, vwEdge)
                                     + (1 - b) * edgeRemoveRobust(G, wvEdge);
 
