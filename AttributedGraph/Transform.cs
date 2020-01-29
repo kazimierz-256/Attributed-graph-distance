@@ -83,19 +83,27 @@ namespace AttributedGraph
 
             return newGraph;
         }
-        
+
         public static void Augment<V, VA, EA>(
                 Graph<V, VA, EA> graph,
                 int targetVertexCount,
                 Func<(V, VA)> vertexGenerator
             )
         {
-            while(graph.VertexCount < targetVertexCount)
+            while (graph.VertexCount < targetVertexCount)
             {
                 var (vertex, attribute) = vertexGenerator();
                 if (!graph.ContainsVertex(vertex))
                     graph.AddVertex(vertex, attribute);
             }
+        }
+
+        public static void RemoveSmallestLast<V, VA, EA>(
+                Graph<V, VA, EA> graph,
+                int targetVertexCount
+                )
+        {
+            throw new NotImplementedException();
         }
     }
 }
