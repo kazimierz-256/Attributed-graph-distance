@@ -6,6 +6,9 @@ namespace AttributedGraph
     public class Graph<V, VA, EA>
     {
         public readonly Dictionary<V, VA> Vertices = new Dictionary<V, VA>();
+        // TODO: create outgoing and incoming edge data structures
+        public readonly Dictionary<V, List<V>> OutgoingEdges = new Dictionary<V, List<V>>();
+        public readonly Dictionary<V, List<V>> IncomingEdges = new Dictionary<V, List<V>>();
         public readonly Dictionary<(V, V), EA> Edges = new Dictionary<(V, V), EA>();
         private readonly bool directed;
 
@@ -28,6 +31,7 @@ namespace AttributedGraph
             => Edges.ContainsKey(edge);
         public void AddVertex(V vertex, VA vertexAttribute)
             => Vertices.Add(vertex, vertexAttribute);
+        // IMPORTANT TODO: when removeing a vertex, remove adjacent edges too!
         public void RemoveVertex(V vertex)
             => Vertices.Remove(vertex);
         public bool ContainsVertex(V vertex)
