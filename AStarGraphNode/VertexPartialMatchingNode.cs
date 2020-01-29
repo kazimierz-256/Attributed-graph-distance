@@ -129,7 +129,7 @@ namespace AStarGraphNode
                 m = max;
                 costMatrix = new double[m, m];
             }
-            else if (encodingMethod == GraphEncodingMethod.RiesenBunke)
+            else if (encodingMethod == GraphEncodingMethod.RiesenBunke2009)
             {
                 m = G.VertexCount + H.VertexCount;
                 costMatrix = new double[m, m];
@@ -147,10 +147,12 @@ namespace AStarGraphNode
                 foreach (var b in bCollection)
                 {
                     // fill in vertex replacement costs
+                    // v in G
                     for (int v = 0; v < G.VertexCount; v++)
                     {
                         // attribute of a vertex
                         var vAttribute = gVerticesKVP[v].Value;
+                        // fv in H
                         for (int fv = 0; fv < H.VertexCount; fv++)
                         {
                             // attribute of a vertex
@@ -159,7 +161,7 @@ namespace AStarGraphNode
                             // local cost matrix
                             var localCostMatrix = new double[m, m];
 
-
+                            // w in G
                             for (int w = 0; w < G.VertexCount; w++)
                             {
                                 // attribute of a vertex
@@ -169,6 +171,7 @@ namespace AStarGraphNode
                                 var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
                                 var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
 
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -186,6 +189,7 @@ namespace AStarGraphNode
                                     localCostMatrix[w, gw] = cost;
                                 }
 
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -198,8 +202,10 @@ namespace AStarGraphNode
                                 }
                             }
 
+                            // w outside G
                             for (int w = G.VertexCount; w < m; w++)
                             {
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -216,6 +222,7 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -232,8 +239,10 @@ namespace AStarGraphNode
                     }
 
                     // fill in vertex adding (to G) costs
+                    // v outside G
                     for (int v = G.VertexCount; v < m; v++)
                     {
+                        // fv in H
                         Action<int> fvTask = fv =>
                         {
                             // attribute of a vertex
@@ -243,11 +252,13 @@ namespace AStarGraphNode
                             var localCostMatrix = new double[m, m];
 
 
+                            // w in G
                             for (int w = 0; w < G.VertexCount; w++)
                             {
                                 // attribute of a vertex
                                 var wAttribute = gVerticesKVP[w].Value;
 
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -265,6 +276,7 @@ namespace AStarGraphNode
                                     localCostMatrix[w, gw] = cost;
                                 }
 
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -275,8 +287,10 @@ namespace AStarGraphNode
                                 }
                             }
 
+                            // w outside G
                             for (int w = G.VertexCount; w < m; w++)
                             {
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -293,6 +307,8 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -315,16 +331,19 @@ namespace AStarGraphNode
                     }
 
                     // fill in vertex removal (from G) costs
+                    // v inside G
                     for (int v = 0; v < G.VertexCount; v++)
                     {
                         // attribute of a vertex
                         var vAttribute = gVerticesKVP[v].Value;
+                        // fv outside H
                         Action<int> fvTask = fv =>
                         {
                             // local cost matrix
                             var localCostMatrix = new double[m, m];
 
 
+                            // w in G
                             for (int w = 0; w < G.VertexCount; w++)
                             {
                                 // attribute of a vertex
@@ -334,6 +353,7 @@ namespace AStarGraphNode
                                 var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
                                 var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
 
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -347,6 +367,8 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -359,8 +381,10 @@ namespace AStarGraphNode
                                 }
                             }
 
+                            // w outside G
                             for (int w = G.VertexCount; w < m; w++)
                             {
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     // attribute of a vertex
@@ -372,6 +396,8 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -393,16 +419,21 @@ namespace AStarGraphNode
                             fvTask(v + H.VertexCount);
                     }
 
+                    // v outside G
                     for (int v = G.VertexCount; v < m; v++)
                     {
+                        // fv outside  H
                         for (int fv = H.VertexCount; fv < m; fv++)
                         {
                             // local cost matrix
                             var localCostMatrix = new double[m, m];
 
+                            // w in G
                             for (int w = 0; w < G.VertexCount; w++)
                             {
                                 var wAttribute = gVerticesKVP[w].Value;
+
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     var gwAttribute = hVerticesKVP[gw].Value;
@@ -412,6 +443,8 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+
+                                // gw outside H
                                 for (int gw = H.VertexCount; gw < m; gw++)
                                 {
                                     var cost =
@@ -421,8 +454,10 @@ namespace AStarGraphNode
                                 }
                             }
 
+                            // w outside G
                             for (int w = G.VertexCount; w < m; w++)
                             {
+                                // gw in H
                                 for (int gw = 0; gw < H.VertexCount; gw++)
                                 {
                                     var gwAttribute = hVerticesKVP[gw].Value;
@@ -432,6 +467,7 @@ namespace AStarGraphNode
 
                                     localCostMatrix[w, gw] = cost;
                                 }
+                                // gw outside H (zeros)
                             }
 
                             var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
@@ -500,7 +536,7 @@ namespace AStarGraphNode
                         for (int w = G.VertexCount; w < m; w++)
                         {
                             var fw = abAssignment[w];
-                            if (fw < H.VertexCount && fv < hVerticesKVP.Count)
+                            if (fw < H.VertexCount && fv < H.VertexCount)
                             {
                                 realAssignmentCost += edgeAddRobust(
                                     H,
