@@ -71,421 +71,446 @@ namespace AStarGraphNode
             // TODO: compute the lower bound using LAP taking constraints into account
 
             double[,] costMatrix = null;
-            var infinity = double.PositiveInfinity;
 
             var gVerticesKVP = G.Vertices.ToList();
             var hVerticesKVP = H.Vertices.ToList();
 
-            // TODO: take into account preassignedVertices, definitely create smaller cost matrix
-            switch (encodingMethod)
+
+            var bestLowerBound = double.NegativeInfinity;
+            var bestUpperBound = double.PositiveInfinity;
+            int[] bestLowerBoundAssignment;
+            int[] bestUpperBoundAssignment;
+
+            Func<Graph<V, VA, EA>, Graph<V, VA, EA>, (V, V), (V, V), double> edgeRelabelRobust =
+            (graph1, graph2, e1, e2) =>
             {
-                case GraphEncodingMethod.Wojciechowski:
+                var g1Contains = graph1.ContainsEdge(e1);
+                var g2Contains = graph2.ContainsEdge(e2);
+                if (g1Contains)
+                {
+                    if (g2Contains)
+                        return edgeRelabel(graph1[e1], graph2[e2]);
+                    else
+                        return edgeRemove(graph1[e1]);
+                }
+                else if (g2Contains)
+                {
+                    return edgeAdd(graph2[e2]);
+                }
+                else
+                {
+                    return 0;
+                }
+            };
+
+            Func<Graph<V, VA, EA>, (V, V), double> edgeAddRobust =
+            (graph, e) =>
+            {
+                if (graph.ContainsEdge(e))
+                    return edgeAdd(graph[e]);
+                else
+                    return 0;
+            };
+
+            Func<Graph<V, VA, EA>, (V, V), double> edgeRemoveRobust =
+            (graph, e) =>
+            {
+                if (graph.ContainsEdge(e))
+                    return edgeRemove(graph[e]);
+                else
+                    return 0;
+            };
+
+            // TODO: take into account preassignedVertices, definitely create smaller cost matrix
+            int m = 0;
+            if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+            {
+                m = Math.Max(G.VertexCount, H.VertexCount);
+                costMatrix = new double[m, m];
+            }
+            else if (encodingMethod == GraphEncodingMethod.RiesenBunke)
+            {
+                m = G.VertexCount + H.VertexCount;
+                costMatrix = new double[m, m];
+                var infinity = double.PositiveInfinity;
+                for (int v = G.VertexCount; v < m; v++)
+                    for (int fv = 0; fv < H.VertexCount; fv++)
+                        costMatrix[v, fv] = infinity;
+                for (int fv = H.VertexCount; fv < m; fv++)
+                    for (int v = 0; v < G.VertexCount; v++)
+                        costMatrix[v, fv] = infinity;
+            }
+
+            foreach (var a in aCollection)
+            {
+                foreach (var b in bCollection)
+                {
+                    // fill in vertex replacement costs
+                    for (int v = 0; v < G.VertexCount; v++)
                     {
-                        var m = Math.Max(G.VertexCount, H.VertexCount);
-                        costMatrix = new double[m, m];
-                        var bestLowerBound = double.NegativeInfinity;
-                        var bestUpperBound = double.PositiveInfinity;
-                        int[] bestLowerBoundAssignment;
-                        int[] bestUpperBoundAssignment;
-
-                        Func<Graph<V, VA, EA>, Graph<V, VA, EA>, (V, V), (V, V), double> edgeRelabelRobust =
-                        (graph1, graph2, e1, e2) =>
+                        // attribute of a vertex
+                        var vAttribute = gVerticesKVP[v].Value;
+                        for (int fv = 0; fv < H.VertexCount; fv++)
                         {
-                            var g1Contains = graph1.ContainsEdge(e1);
-                            var g2Contains = graph2.ContainsEdge(e2);
-                            if (g1Contains)
+                            // attribute of a vertex
+                            var fvAttribute = hVerticesKVP[fv].Value;
+
+                            // local cost matrix
+                            var localCostMatrix = new double[m, m];
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
                             {
-                                if (g2Contains)
-                                    return edgeRelabel(graph1[e1], graph2[e2]);
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                // attributes of edges in both directions
+                                var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                    var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+
+                                    var cost =
+                                    a / m * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    + b * edgeRelabelRobust(G, H, vwEdge, fvgwEdge)
+                                    + (1 - b) * edgeRelabelRobust(G, H, wvEdge, gwfvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            for (int w = G.VertexCount; w < m; w++)
+                            {
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                    var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+
+                                    var cost =
+                                    a / m * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / m * vertexAdd(gwAttribute)
+                                    + b * edgeAddRobust(H, fvgwEdge)
+                                    + (1 - b) * edgeAddRobust(H, gwfvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                // attributes of edges in both directions
+                                var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+
+                                for (int gw = H.VertexCount; gw < m; gw++)
+                                {
+                                    var cost =
+                                    a / m * vertexRelabel(vAttribute, fvAttribute)
+                                    + (1 - a) / m * vertexRemove(wAttribute)
+                                    + b * edgeRemoveRobust(G, vwEdge)
+                                    + (1 - b) * edgeRemoveRobust(G, wvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                            var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
+                            costMatrix[v, fv] = localAssignmentCost;
+                        }
+                    }
+
+                    // fill in vertex adding (to G) costs
+                    for (int v = G.VertexCount; v < m; v++)
+                    {
+                        Action<int> fvTask = fv =>
+                        {
+                            // attribute of a vertex
+                            var fvAttribute = hVerticesKVP[fv].Value;
+
+                            // local cost matrix
+                            var localCostMatrix = new double[m, m];
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                    var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+
+                                    var cost =
+                                    a / m * vertexAdd(fvAttribute)
+                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    + b * edgeAddRobust(H, fvgwEdge)
+                                    + (1 - b) * edgeAddRobust(H, gwfvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            for (int w = G.VertexCount; w < m; w++)
+                            {
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
+                                    var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
+
+                                    var cost =
+                                    a / m * vertexAdd(fvAttribute)
+                                    + (1 - a) / m * vertexAdd(gwAttribute)
+                                    + b * edgeAddRobust(H, fvgwEdge)
+                                    + (1 - b) * edgeAddRobust(H, gwfvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                for (int gw = H.VertexCount; gw < m; gw++)
+                                {
+                                    var cost =
+                                    a / m * vertexAdd(fvAttribute)
+                                    + (1 - a) / m * vertexRemove(wAttribute);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                            var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
+                            costMatrix[v, fv] = localAssignmentCost;
+                        };
+
+                        if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+                            for (int fv = 0; fv < H.VertexCount; fv++)
+                                fvTask(fv);
+                        else
+                            fvTask(v - G.VertexCount);
+                    }
+
+                    // fill in vertex removal (from G) costs
+                    for (int v = 0; v < G.VertexCount; v++)
+                    {
+                        // attribute of a vertex
+                        var vAttribute = gVerticesKVP[v].Value;
+                        Action<int> fvTask = fv =>
+                        {
+                            // local cost matrix
+                            var localCostMatrix = new double[m, m];
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                // attributes of edges in both directions
+                                var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var cost =
+                                    a / m * vertexRemove(vAttribute)
+                                    + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
+                                    + b * edgeRemoveRobust(G, vwEdge)
+                                    + (1 - b) * edgeRemoveRobust(G, wvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            for (int w = G.VertexCount; w < m; w++)
+                            {
+                                for (int gw = 0; gw < H.VertexCount; gw++)
+                                {
+                                    // attribute of a vertex
+                                    var gwAttribute = hVerticesKVP[gw].Value;
+
+                                    var cost =
+                                    a / m * vertexRemove(vAttribute)
+                                    + (1 - a) / m * vertexAdd(gwAttribute);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                // attribute of a vertex
+                                var wAttribute = gVerticesKVP[w].Value;
+
+                                // attributes of edges in both directions
+                                var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
+                                var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
+
+                                for (int gw = H.VertexCount; gw < m; gw++)
+                                {
+                                    var cost =
+                                    a / m * vertexRemove(vAttribute)
+                                    + (1 - a) / m * vertexRemove(wAttribute)
+                                    + b * edgeRemoveRobust(G, vwEdge)
+                                    + (1 - b) * edgeRemoveRobust(G, wvEdge);
+
+                                    localCostMatrix[w, gw] = cost;
+                                }
+                            }
+
+                            var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
+                            var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
+                            costMatrix[v, fv] = localAssignmentCost;
+                        };
+
+                        if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+                            for (int fv = H.VertexCount; fv < m; fv++)
+                                fvTask(fv);
+                        else
+                            fvTask(v + H.VertexCount);
+                    }
+
+                    // lower bound estimate
+                    var abAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
+                    var abAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, abAssignment);
+                    if (abAssignmentCost > bestLowerBound)
+                    {
+                        bestLowerBound = abAssignmentCost;
+                        bestLowerBoundAssignment = abAssignment;
+                        BestLowerBoundA = a;
+                        BestLowerBoundB = b;
+                        LowerBound = bestLowerBound;
+                    }
+
+                    // upper bound estimate
+                    var realAssignmentCost = 0d;
+                    for (int v = 0; v < G.VertexCount; v++)
+                    {
+                        var fv = abAssignment[v];
+                        if (fv < H.VertexCount)
+                        {
+                            realAssignmentCost += vertexRelabel(gVerticesKVP[v].Value, hVerticesKVP[fv].Value);
+                        }
+                        else
+                        {
+                            realAssignmentCost += vertexAdd(gVerticesKVP[v].Value);
+
+                        }
+                        for (int w = 0; w < G.VertexCount; w++)
+                        {
+                            var fw = abAssignment[w];
+                            if (fw < H.VertexCount)
+                            {
+                                if (fv < hVerticesKVP.Count)
+                                {
+                                    realAssignmentCost += edgeRelabelRobust(
+                                        G,
+                                        H,
+                                        (gVerticesKVP[v].Key, gVerticesKVP[w].Key),
+                                        (hVerticesKVP[fv].Key, hVerticesKVP[fw].Key)
+                                    );
+                                }
                                 else
-                                    return edgeRemove(graph1[e1]);
-                            }
-                            else if (g2Contains)
-                            {
-                                return edgeAdd(graph2[e2]);
+                                {
+                                    realAssignmentCost += edgeRemoveRobust(
+                                        G,
+                                        (gVerticesKVP[v].Key, gVerticesKVP[w].Key)
+                                    );
+                                }
                             }
                             else
                             {
-                                return 0;
-                            }
-                        };
-
-                        Func<Graph<V, VA, EA>, (V, V), double> edgeAddRobust =
-                        (graph, e) =>
-                        {
-                            if (graph.ContainsEdge(e))
-                                return edgeAdd(graph[e]);
-                            else
-                                return 0;
-                        };
-
-                        Func<Graph<V, VA, EA>, (V, V), double> edgeRemoveRobust =
-                        (graph, e) =>
-                        {
-                            if (graph.ContainsEdge(e))
-                                return edgeRemove(graph[e]);
-                            else
-                                return 0;
-                        };
-
-                        foreach (var a in aCollection)
-                        {
-                            foreach (var b in bCollection)
-                            {
-                                // fill in vertex replacement costs
-                                for (int v = 0; v < G.VertexCount; v++)
-                                {
-                                    // attribute of a vertex
-                                    var vAttribute = gVerticesKVP[v].Value;
-                                    for (int fv = 0; fv < H.VertexCount; fv++)
-                                    {
-                                        // attribute of a vertex
-                                        var fvAttribute = hVerticesKVP[fv].Value;
-
-                                        // local cost matrix
-                                        var localCostMatrix = new double[m, m];
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            // attributes of edges in both directions
-                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-
-                                                var cost =
-                                                a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeRelabelRobust(G, H, vwEdge, fvgwEdge)
-                                                + (1 - b) * edgeRelabelRobust(G, H, wvEdge, gwfvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        for (int w = G.VertexCount; w < m; w++)
-                                        {
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-
-                                                var cost =
-                                                a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1 - a) / m * vertexAdd(gwAttribute)
-                                                + b * edgeAddRobust(H, fvgwEdge)
-                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            // attributes of edges in both directions
-                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-
-                                            for (int gw = H.VertexCount; gw < m; gw++)
-                                            {
-                                                var cost =
-                                                a / m * vertexRelabel(vAttribute, fvAttribute)
-                                                + (1 - a) / m * vertexRemove(wAttribute)
-                                                + b * edgeRemoveRobust(G, vwEdge)
-                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
-                                        costMatrix[v, fv] = localAssignmentCost;
-                                    }
-                                }
-
-                                // fill in vertex adding (to G) costs
-                                for (int v = G.VertexCount; v < m; v++)
-                                {
-                                    for (int fv = 0; fv < H.VertexCount; fv++)
-                                    {
-                                        // attribute of a vertex
-                                        var fvAttribute = hVerticesKVP[fv].Value;
-
-                                        // local cost matrix
-                                        var localCostMatrix = new double[m, m];
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-
-                                                var cost =
-                                                a / m * vertexAdd(fvAttribute)
-                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeAddRobust(H, fvgwEdge)
-                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        for (int w = G.VertexCount; w < m; w++)
-                                        {
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var fvgwEdge = (hVerticesKVP[fv].Key, hVerticesKVP[gw].Key);
-                                                var gwfvEdge = (hVerticesKVP[gw].Key, hVerticesKVP[fv].Key);
-
-                                                var cost =
-                                                a / m * vertexAdd(fvAttribute)
-                                                + (1 - a) / m * vertexAdd(gwAttribute)
-                                                + b * edgeAddRobust(H, fvgwEdge)
-                                                + (1 - b) * edgeAddRobust(H, gwfvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            for (int gw = H.VertexCount; gw < m; gw++)
-                                            {
-                                                var cost =
-                                                a / m * vertexAdd(fvAttribute)
-                                                + (1 - a) / m * vertexRemove(wAttribute);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
-                                        costMatrix[v, fv] = localAssignmentCost;
-                                    }
-                                }
-
-                                // fill in vertex removal (from G) costs
-                                for (int v = 0; v < G.VertexCount; v++)
-                                {
-                                    // attribute of a vertex
-                                    var vAttribute = gVerticesKVP[v].Value;
-                                    for (int fv = H.VertexCount; fv < m; fv++)
-                                    {
-                                        // local cost matrix
-                                        var localCostMatrix = new double[m, m];
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            // attributes of edges in both directions
-                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var cost =
-                                                a / m * vertexRemove(vAttribute)
-                                                + (1 - a) / m * vertexRelabel(wAttribute, gwAttribute)
-                                                + b * edgeRemoveRobust(G, vwEdge)
-                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        for (int w = G.VertexCount; w < m; w++)
-                                        {
-                                            for (int gw = 0; gw < H.VertexCount; gw++)
-                                            {
-                                                // attribute of a vertex
-                                                var gwAttribute = hVerticesKVP[gw].Value;
-
-                                                var cost =
-                                                a / m * vertexRemove(vAttribute)
-                                                + (1 - a) / m * vertexAdd(gwAttribute);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-
-                                        for (int w = 0; w < G.VertexCount; w++)
-                                        {
-                                            // attribute of a vertex
-                                            var wAttribute = gVerticesKVP[w].Value;
-
-                                            // attributes of edges in both directions
-                                            var vwEdge = (gVerticesKVP[v].Key, gVerticesKVP[w].Key);
-                                            var wvEdge = (gVerticesKVP[w].Key, gVerticesKVP[v].Key);
-
-                                            for (int gw = H.VertexCount; gw < m; gw++)
-                                            {
-                                                var cost =
-                                                a / m * vertexRemove(vAttribute)
-                                                + (1 - a) / m * vertexRemove(wAttribute)
-                                                + b * edgeRemoveRobust(G, vwEdge)
-                                                + (1 - b) * edgeRemoveRobust(G, wvEdge);
-
-                                                localCostMatrix[w, gw] = cost;
-                                            }
-                                        }
-
-                                        var localAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(localCostMatrix);
-                                        var localAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(localCostMatrix, localAssignment);
-                                        costMatrix[v, fv] = localAssignmentCost;
-                                    }
-                                }
-
-                                // lower bound estimate
-                                var abAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
-                                var abAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, abAssignment);
-                                if (abAssignmentCost > bestLowerBound)
-                                {
-                                    bestLowerBound = abAssignmentCost;
-                                    bestLowerBoundAssignment = abAssignment;
-                                    BestLowerBoundA = a;
-                                    BestLowerBoundB = b;
-                                    LowerBound = bestLowerBound;
-                                }
-
-                                // upper bound estimate
-                                var realAssignmentCost = 0d;
-                                for (int v = 0; v < G.VertexCount; v++)
-                                {
-                                    var fv = abAssignment[v];
-                                    if (fv < H.VertexCount)
-                                    {
-                                        realAssignmentCost += vertexRelabel(gVerticesKVP[v].Value, hVerticesKVP[fv].Value);
-                                    }
-                                    else
-                                    {
-                                        realAssignmentCost += vertexAdd(gVerticesKVP[v].Value);
-
-                                    }
-                                    for (int w = 0; w < G.VertexCount; w++)
-                                    {
-                                        if (abAssignment[w] < H.VertexCount)
-                                        {
-                                            realAssignmentCost += edgeRelabelRobust(
-                                                G,
-                                                H,
-                                                (gVerticesKVP[v].Key, gVerticesKVP[w].Key),
-                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            realAssignmentCost += edgeRemoveRobust(
-                                                G,
-                                                (gVerticesKVP[v].Key, gVerticesKVP[w].Key)
-                                            );
-                                        }
-                                    }
-                                    for (int w = G.VertexCount; w < m; w++)
-                                    {
-                                        if (abAssignment[w] < H.VertexCount)
-                                        {
-                                            realAssignmentCost += edgeAddRobust(
-                                                H,
-                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
-                                            );
-                                        }
-                                    }
-                                }
-                                for (int v = G.VertexCount; v < m; v++)
-                                {
-                                    var fv = abAssignment[v];
-                                    if (fv < H.VertexCount)
-                                    {
-                                        realAssignmentCost += vertexRemove(hVerticesKVP[fv].Value);
-                                    }
-                                    for (int w = 0; w < G.VertexCount; w++)
-                                    {
-                                        if (abAssignment[w] < H.VertexCount)
-                                        {
-                                            realAssignmentCost += edgeAddRobust(
-                                                H,
-                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
-                                            );
-                                        }
-                                    }
-                                    for (int w = G.VertexCount; w < m; w++)
-                                    {
-                                        if (abAssignment[w] < H.VertexCount)
-                                        {
-                                            realAssignmentCost += edgeAddRobust(
-                                                H,
-                                                (hVerticesKVP[abAssignment[v]].Key, hVerticesKVP[abAssignment[w]].Key)
-                                            );
-                                        }
-                                    }
-                                }
-                                if (realAssignmentCost < bestUpperBound)
-                                {
-                                    bestUpperBound = realAssignmentCost;
-                                    bestUpperBoundAssignment = abAssignment;
-                                    BestUpperBoundA = a;
-                                    BestUpperBoundB = b;
-                                    UpperBound = bestUpperBound;
-                                }
-                                
-                                abLowerBounds.Add((a, b), abAssignmentCost);
-                                abUpperBounds.Add((a, b), realAssignmentCost);
+                                realAssignmentCost += edgeRemoveRobust(
+                                    G,
+                                    (gVerticesKVP[v].Key, gVerticesKVP[w].Key)
+                                );
                             }
                         }
-                        break;
+                        for (int w = G.VertexCount; w < m; w++)
+                        {
+                            var fw = abAssignment[w];
+                            if (fw < H.VertexCount && fv < hVerticesKVP.Count)
+                            {
+                                realAssignmentCost += edgeAddRobust(
+                                    H,
+                                    (hVerticesKVP[fv].Key, hVerticesKVP[fw].Key)
+                                );
+                            }
+                        }
                     }
-                case GraphEncodingMethod.RiesenBunke:
+                    for (int v = G.VertexCount; v < m; v++)
                     {
-                        var m = G.VertexCount + H.VertexCount;
-                        costMatrix = new double[m, m];
-
-                        throw new NotImplementedException();
-                        // TODO: assign LowerBound and UpperBound
-                        break;
+                        var fv = abAssignment[v];
+                        if (fv < H.VertexCount)
+                        {
+                            realAssignmentCost += vertexRemove(hVerticesKVP[fv].Value);
+                            for (int w = 0; w < G.VertexCount; w++)
+                            {
+                                var fw = abAssignment[w];
+                                if (fw < H.VertexCount)
+                                {
+                                    realAssignmentCost += edgeAddRobust(
+                                        H,
+                                        (hVerticesKVP[fv].Key, hVerticesKVP[fw].Key)
+                                    );
+                                }
+                            }
+                            for (int w = G.VertexCount; w < m; w++)
+                            {
+                                var fw = abAssignment[w];
+                                if (fw < H.VertexCount)
+                                {
+                                    realAssignmentCost += edgeAddRobust(
+                                        H,
+                                        (hVerticesKVP[fv].Key, hVerticesKVP[fw].Key)
+                                    );
+                                }
+                            }
+                        }
                     }
-                default:
-                    throw new Exception("Unknown graph encoding method");
+                    if (realAssignmentCost < bestUpperBound)
+                    {
+                        bestUpperBound = realAssignmentCost;
+                        bestUpperBoundAssignment = abAssignment;
+                        BestUpperBoundA = a;
+                        BestUpperBoundB = b;
+                        UpperBound = bestUpperBound;
+                    }
+
+                    abLowerBounds.Add((a, b), abAssignmentCost);
+                    abUpperBounds.Add((a, b), realAssignmentCost);
+                }
             }
         }
     }
