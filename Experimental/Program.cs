@@ -21,18 +21,20 @@ namespace Experimental
                 return random.NextDouble();
             };
 
+            Func<double, double> boundMetric = a => a/(1+a);
+
             Func<double, double, double> vertexRelabel = (a1, a2) =>
             {
-                return Math.Abs(a1 - a2);
+                return boundMetric(Math.Abs(a1 - a2));
             };
-            Func<double, double> vertexAdd = a => Math.Abs(a);
+            Func<double, double> vertexAdd = a => 1;
             Func<double, double> vertexRemove = vertexAdd;
 
             Func<double, double, double> edgeRelabel = (a1, a2) =>
             {
-                return Math.Abs(a1 - a2);
+                return boundMetric(Math.Abs(a1 - a2));
             };
-            Func<double, double> edgeAdd = a => Math.Abs(a);
+            Func<double, double> edgeAdd = a => 1;
             Func<double, double> edgeRemove = edgeAdd;
 
             var G = RandomGraphFactory.generateRandomInstance(
@@ -43,12 +45,17 @@ namespace Experimental
                 edgeAttributeGenerator: edgeAttributeGenerator
                 );
             const int hGraphCount = 50;
-            
             var graphsPreclassified = new List<(Graph<int, double, double>, int)>();
+            // graphsPreclassified.Add((Transform.Permute(G, random), 0));
+            // var anotherPermutation = Transform.Permute(G, random);
+            // anotherPermutation.AddVertex(-1, 0);
+            // anotherPermutation.AddVertex(-2, 0);
+            // anotherPermutation.AddVertex(-3, 0);
+            // graphsPreclassified.Add((anotherPermutation, 1));
             for (int i = 0; i < hGraphCount; i++)
             {
                 var H = RandomGraphFactory.generateRandomInstance(
-                    vertices: 13,
+                    vertices: i,
                     density: .355,
                     directed: true,
                     vertexAttributeGenerator: vertexAttributeGenerator,
