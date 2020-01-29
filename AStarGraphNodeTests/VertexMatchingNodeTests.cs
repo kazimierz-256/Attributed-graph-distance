@@ -14,15 +14,15 @@ namespace AStarGraphNodeTests
         {
             return bound(Math.Abs(a1 - a2));
         };
-        private Func<double, double> vertexAdd = a => 1;
-        private Func<double, double> vertexRemove = a => 1;
+        private Func<double, double> vertexAdd = a => bound(Math.Abs(a));
+        private Func<double, double> vertexRemove = a => bound(Math.Abs(a));
 
         private Func<double, double, double> edgeRelabel = (a1, a2) =>
         {
             return bound(Math.Abs(a1 - a2));
         };
-        private Func<double, double> edgeAdd = a => 1;
-        private Func<double, double> edgeRemove = a => 1;
+        private Func<double, double> edgeAdd = a => bound(Math.Abs(a));
+        private Func<double, double> edgeRemove = a => bound(Math.Abs(a));
         private int precision = 13;
 
         private void EncodingsMatch<V, VA, EA>(
@@ -82,7 +82,7 @@ namespace AStarGraphNodeTests
                 edgeRemove,
                 aCollection,
                 aCollection,
-                encodingMethod: GraphEncodingMethod.RiesenBunke
+                encodingMethod: GraphEncodingMethod.RiesenBunke2009
             );
 
             Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
@@ -173,12 +173,12 @@ namespace AStarGraphNodeTests
                 random
                 );
 
-            var a = new List<double>() { .5 };
+            var a = new List<double>() { 1 };
             var b = new List<double>() { .5 };
 
             foreach (var encoding in new[] {
                     GraphEncodingMethod.Wojciechowski,
-                    // GraphEncodingMethod.RiesenBunke,
+                    GraphEncodingMethod.RiesenBunke2009,
                 })
             {
                 var matching1 = AugmentationMatches<int, double, double>(
@@ -198,7 +198,7 @@ namespace AStarGraphNodeTests
                     encodingMethod: encoding
                     );
                 var matching2 = AugmentationMatches<int, double, double>(
-                    G.VertexCount + H.VertexCount,
+                    H.VertexCount + G.VertexCount,
                     random,
                     vertexGenerator,
                     G,
@@ -248,7 +248,7 @@ namespace AStarGraphNodeTests
                 random
                 );
 
-            var a = new List<double>() { .5 };
+            var a = new List<double>() { 1 };
             var b = new List<double>() { .5 };
 
             Func<(int, double)> vertexGenerator = () => (random.Next(), 0d);
