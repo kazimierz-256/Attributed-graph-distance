@@ -21,20 +21,25 @@ namespace Experimental
                 return random.NextDouble();
             };
 
-            Func<double, double> boundMetric = a => a/(1+a);
+            double vertexBound = 2;
+            double edgeBound = 3;
+            double vertexDecay = 1;
+            double edgeDecay = 1;
+
+            Func<double, double, double, double> boundMetric = (a, bound, decay) => bound * a / (1 / decay + a);
 
             Func<double, double, double> vertexRelabel = (a1, a2) =>
             {
-                return boundMetric(Math.Abs(a1 - a2));
+                return boundMetric(Math.Abs(a1 - a2), edgeBound, edgeDecay);
             };
-            Func<double, double> vertexAdd = a => 1;
+            Func<double, double> vertexAdd = a => boundMetric(Math.Abs(a), vertexBound, vertexDecay);
             Func<double, double> vertexRemove = vertexAdd;
 
             Func<double, double, double> edgeRelabel = (a1, a2) =>
             {
                 return boundMetric(Math.Abs(a1 - a2));
             };
-            Func<double, double> edgeAdd = a => 1;
+            Func<double, double> edgeAdd = a => boundMetric(Math.Abs(a));
             Func<double, double> edgeRemove = edgeAdd;
 
             var G = RandomGraphFactory.generateRandomInstance(
@@ -44,7 +49,7 @@ namespace Experimental
                 vertexAttributeGenerator: vertexAttributeGenerator,
                 edgeAttributeGenerator: edgeAttributeGenerator
                 );
-            const int hGraphCount = 50;
+            const int hGraphCount = 23;
             var graphsPreclassified = new List<(Graph<int, double, double>, int)>();
             // graphsPreclassified.Add((Transform.Permute(G, random), 0));
             // var anotherPermutation = Transform.Permute(G, random);
@@ -65,10 +70,10 @@ namespace Experimental
                 graphsPreclassified.Add((H, hClassID));
             }
 
-            // var a = new List<double>() { 0, 1, .5, 1d/3, 2d/3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
-            // var b = new List<double>() { 0, 1, .5, 1d/3, 2d/3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
-            var a = new List<double>() { 0, 1, .5};
-            var b = new List<double>() { 0, 1, .5};
+            var a = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
+            var b = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
+            // var a = new List<double>() { 0, 1, .5};
+            // var b = new List<double>() { 0, 1, .5};
 
             var k = 3;
 
@@ -90,8 +95,8 @@ namespace Experimental
             );
 
             System.Console.WriteLine($"Detected class: {gClassID}");
-            
-            var RiesenBunkeAB = (1,1);
+
+            var RiesenBunke2009AB = (1, 1);
 
             var printouts = new List<(string, Func<VertexPartialMatchingNode<int, double, double>, int, string>)>()
             {
@@ -101,7 +106,7 @@ namespace Experimental
                 ),
                 (
                     "My lower bound / theirs: ",
-                    (matching, classID) => $"{matching.LowerBound / matching.abLowerBounds[RiesenBunkeAB]:f2} "
+                    (matching, classID) => $"{matching.LowerBound / matching.abLowerBounds[RiesenBunke2009AB]:f2} "
                 ),
                 (
                     "My lower bound / my upper bound: ",
@@ -109,15 +114,15 @@ namespace Experimental
                 ),
                 (
                     "Their lower bound / their upper bound: ",
-                    (matching, classID) => $"{matching.abLowerBounds[RiesenBunkeAB] / matching.abUpperBounds[RiesenBunkeAB]:f2}"
+                    (matching, classID) => $"{matching.abLowerBounds[RiesenBunke2009AB] / matching.abUpperBounds[RiesenBunke2009AB]:f2}"
                 ),
                 (
                     "Their upper bound / my upper bound: ",
-                    (matching, classID) => $"{matching.UpperBound / matching.abUpperBounds[RiesenBunkeAB]:f2}"
+                    (matching, classID) => $"{matching.UpperBound / matching.abUpperBounds[RiesenBunke2009AB]:f2}"
                 ),
                 (
                     "My relative error, their relative error: ",
-                    (matching, classID) => $"{(matching.UpperBound - matching.LowerBound)/matching.LowerBound:f2} {(matching.abUpperBounds[RiesenBunkeAB] - matching.abLowerBounds[RiesenBunkeAB])/matching.abLowerBounds[RiesenBunkeAB]:f2}"
+                    (matching, classID) => $"{(matching.UpperBound - matching.LowerBound)/matching.LowerBound:f2} {(matching.abUpperBounds[RiesenBunke2009AB] - matching.abLowerBounds[RiesenBunke2009AB])/matching.abLowerBounds[RiesenBunke2009AB]:f2}"
                 ),
                 (
                     $"Best lower bound: ",
