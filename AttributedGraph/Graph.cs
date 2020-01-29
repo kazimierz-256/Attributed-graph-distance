@@ -35,6 +35,8 @@ namespace AttributedGraph
 
         public int VertexCount => Vertices.Count;
         public int EdgeCount => Edges.Count;
+
+        public bool Directed => directed;
         public VA this[V vertex]
         {
             get { return Vertices[vertex]; }
