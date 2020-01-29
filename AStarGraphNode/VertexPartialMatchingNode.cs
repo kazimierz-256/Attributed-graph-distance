@@ -40,7 +40,7 @@ namespace AStarGraphNode
             get;
             private set;
         }
-
+        public int[] optimalAssignment { get; private set; }
         public double BestLowerBoundA { get; private set; }
         public double BestLowerBoundB { get; private set; }
         public double BestUpperBoundA { get; private set; }
@@ -412,6 +412,7 @@ namespace AStarGraphNode
                         BestLowerBoundA = a;
                         BestLowerBoundB = b;
                         LowerBound = bestLowerBound;
+                        optimalAssignment = abAssignment;
                     }
 
                     // upper bound estimate
