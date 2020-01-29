@@ -6,7 +6,8 @@ namespace AttributedGraph
     public static class Transform
     {
         public static Graph<V, VA, EA> Permute<V, VA, EA>(
-                Graph<V, VA, EA> graph, Random random = null,
+                Graph<V, VA, EA> graph,
+                Random random = null,
                 Func<V, VA, (V, VA)> cloneVertex = null,
                 Func<(V, V), EA, ((V, V), EA)> cloneEdge = null
             )
@@ -81,6 +82,20 @@ namespace AttributedGraph
             }
 
             return newGraph;
+        }
+        
+        public static void Augment<V, VA, EA>(
+                Graph<V, VA, EA> graph,
+                int targetVertexCount,
+                Func<(V, VA)> vertexGenerator
+            )
+        {
+            while(graph.VertexCount < targetVertexCount)
+            {
+                var (vertex, attribute) = vertexGenerator();
+                if (!graph.ContainsVertex(vertex))
+                    graph.AddVertex(vertex, attribute);
+            }
         }
     }
 }
