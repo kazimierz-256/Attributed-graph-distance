@@ -96,18 +96,22 @@ namespace Experimental
                                     edgeAttributeGenerator: edgeAttributeGenerator
                                     );
 
+                                var matchingParameters = new GraphMatchingParameters<int, double, double>
+                                {
+                                    aCollection = a,
+                                    bCollection = b,
+                                    edgeAdd = edgeAdd,
+                                    vertexAdd = vertexAdd,
+                                    edgeRelabel = edgeRelabel,
+                                    edgeRemove = edgeRemove,
+                                    vertexRemove = vertexRemove,
+                                    vertexRelabel = vertexRelabel,
+                                    encodingMethod = GraphEncodingMethod.Wojciechowski
+                                };
                                 var matching = new VertexPartialMatchingNode<int, double, double>(
                                     G,
                                     H,
-                                    vertexAdd,
-                                    vertexRelabel,
-                                    vertexRemove,
-                                    edgeAdd,
-                                    edgeRelabel,
-                                    edgeRemove,
-                                    a,
-                                    b,
-                                    encodingMethod: GraphEncodingMethod.Wojciechowski
+                                    matchingParameters
                                 );
 
                                 var myRelativeError = (matching.UpperBound - matching.LowerBound) / matching.LowerBound;
@@ -128,8 +132,8 @@ namespace Experimental
                                         // var score = (matching.UpperBound - kvp.Value) / matching.UpperBound;
                                         var score = kvp.Value > Math.Max(Math.Max(
                                             matching.abLowerBounds[(.5, .5)],
-                                            matching.abLowerBounds[(1d/3, .5)]),
-                                            matching.abLowerBounds[(2d/3, .5)]
+                                            matching.abLowerBounds[(1d / 3, .5)]),
+                                            matching.abLowerBounds[(2d / 3, .5)]
                                             ) ? 1 : 0;
                                         // if (!double.IsNaN(score))
                                         results[kvp.Key] += score;
