@@ -48,26 +48,63 @@ namespace AStarGraphNode
         public VertexPartialMatchingNode(
                 Graph<V, VA, EA> G,
                 Graph<V, VA, EA> H,
-                Func<VA, double> vertexAdd,
-                Func<VA, VA, double> vertexRelabel,
-                Func<VA, double> vertexRemove,
-                Func<EA, double> edgeAdd,
-                Func<EA, EA, double> edgeRelabel,
-                Func<EA, double> edgeRemove,
-                ICollection<double> aCollection,
-                ICollection<double> bCollection,
-                List<(V, V)> preassignedVertices = default,
-                GraphEncodingMethod encodingMethod = GraphEncodingMethod.Wojciechowski
+                GraphMatchingParameters<V, VA, EA> matchingParameters
             )
         {
             this.G = G;
             this.H = H;
-            this.preassignedVertices = preassignedVertices;
+            this.preassignedVertices = matchingParameters.preassignedVertices;
+
+            var cachedVertexAddingCosts = new Dictionary<VA, double>();
+            var cachedVertexRemovingCosts = new Dictionary<VA, double>();
+            var cachedVertexRelabellingCosts = new Dictionary<(VA, VA), double>();
+
+            var cachedEdgeAddingCosts = new Dictionary<EA, double>();
+            var cachedEdgeRemovingCosts = new Dictionary<EA, double>();
+            var cachedEdgeRelabellingCosts = new Dictionary<(EA, EA), double>();
+
+            // attempt to cache costs
+            Func<VA, double> vertexAdd = (a) =>
+            {
+                if (!cachedVertexAddingCosts.ContainsKey(a))
+                    cachedVertexAddingCosts.Add(a, matchingParameters.vertexAdd(a));
+                return cachedVertexAddingCosts[a];
+            };
+            Func<VA, double> vertexRemove = (a) =>
+            {
+                if (!cachedVertexRemovingCosts.ContainsKey(a))
+                    cachedVertexRemovingCosts.Add(a, matchingParameters.vertexRemove(a));
+                return cachedVertexRemovingCosts[a];
+            };
+            Func<VA, VA, double> vertexRelabel = (a1, a2) =>
+            {
+                var key = (a1, a2);
+                if (!cachedVertexRelabellingCosts.ContainsKey(key))
+                    cachedVertexRelabellingCosts.Add(key, matchingParameters.vertexRelabel(a1, a2));
+                return cachedVertexRelabellingCosts[key];
+            };
+
+            Func<EA, double> edgeAdd = (a) =>
+            {
+                if (!cachedEdgeAddingCosts.ContainsKey(a))
+                    cachedEdgeAddingCosts.Add(a, matchingParameters.edgeAdd(a));
+                return cachedEdgeAddingCosts[a];
+            };
+            Func<EA, double> edgeRemove = (a) =>
+            {
+                if (!cachedEdgeRemovingCosts.ContainsKey(a))
+                    cachedEdgeRemovingCosts.Add(a, matchingParameters.edgeRemove(a));
+                return cachedEdgeRemovingCosts[a];
+            };
+            Func<EA, EA, double> edgeRelabel = (a1, a2) =>
+            {
+                var key = (a1, a2);
+                if (!cachedEdgeRelabellingCosts.ContainsKey(key))
+                    cachedEdgeRelabellingCosts.Add(key, matchingParameters.edgeRelabel(a1, a2));
+                return cachedEdgeRelabellingCosts[key];
+            };
 
             // Matching part
-            // TODO: build a cached matrix of all possible attributes for easy retrieval and modification
-            // taking into account already assigned vertices
-
             // TODO: compute the lower bound using LAP taking constraints into account
 
             double[,] costMatrix = null;
@@ -124,12 +161,12 @@ namespace AStarGraphNode
             // TODO: take into account preassignedVertices, definitely create smaller cost matrix
             int m = 0;
             var max = Math.Max(G.VertexCount, H.VertexCount);
-            if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+            if (matchingParameters.encodingMethod == GraphEncodingMethod.Wojciechowski)
             {
                 m = max;
                 costMatrix = new double[m, m];
             }
-            else if (encodingMethod == GraphEncodingMethod.RiesenBunke2009)
+            else if (matchingParameters.encodingMethod == GraphEncodingMethod.RiesenBunke2009)
             {
                 m = G.VertexCount + H.VertexCount;
                 costMatrix = new double[m, m];
@@ -142,9 +179,9 @@ namespace AStarGraphNode
                         costMatrix[v, fv] = infinity;
             }
 
-            foreach (var a in aCollection)
+            foreach (var a in matchingParameters.aCollection)
             {
-                foreach (var b in bCollection)
+                foreach (var b in matchingParameters.bCollection)
                 {
                     // fill in vertex replacement costs
                     // v in G
@@ -323,7 +360,7 @@ namespace AStarGraphNode
                             costMatrix[v, fv] = localAssignmentCost;
                         };
 
-                        if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+                        if (matchingParameters.encodingMethod == GraphEncodingMethod.Wojciechowski)
                             for (int fv = 0; fv < H.VertexCount; fv++)
                                 fvTask(fv);
                         else
@@ -412,7 +449,7 @@ namespace AStarGraphNode
                             costMatrix[v, fv] = localAssignmentCost;
                         };
 
-                        if (encodingMethod == GraphEncodingMethod.Wojciechowski)
+                        if (matchingParameters.encodingMethod == GraphEncodingMethod.Wojciechowski)
                             for (int fv = H.VertexCount; fv < m; fv++)
                                 fvTask(fv);
                         else
