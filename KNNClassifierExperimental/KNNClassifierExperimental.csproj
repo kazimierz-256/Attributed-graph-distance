@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Postgres_enron_database\Postgres_enron_database.csproj" />
     <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
+    <ProjectReference Include="..\KNNClassifier\KNNClassifier.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
