@@ -45,6 +45,8 @@ namespace KNNClassifierExperimental
             if (!dayLength.HasValue)
                 dayLength = TimeSpan.FromHours(24);// could be longer than 24 hrs, but that's complicated
             var emails = context.Emails;
+            using var context2 = new EnronContext();
+            var emails2 = context2.Emails;
 
             Func<DateTime, DataSetCategory> datetimeToClass = datetime =>
             {
@@ -78,7 +80,7 @@ namespace KNNClassifierExperimental
                 date += TimeSpan.FromHours(24), dateEnd += dayLength.Value
                 )
             {
-                var emailsFromDate = emails.Where(email => email.SendDate > date && email.SendDate < dateEnd);
+                var emailsFromDate = emails2.Where(email => email.SendDate > date && email.SendDate < dateEnd);
                 var graph = EmailToGraph.GetGraph(context, emailsFromDate);
 
                 switch (datetimeToClass(date))

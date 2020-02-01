@@ -15,7 +15,7 @@ namespace KNNClassifierExperimental
             var enronAddresses = new HashSet<string>();
             var directedEmails = new Dictionary<(string, string), List<EmailObject>>();
 
-            foreach (var email in emails.ToList())
+            foreach (var email in emails)
             {
                 var fromAddress = context.EmailAddresses.Where(ea => ea.Id == email.FromId).First();
                 if (fromAddress.BelongsToEnron)
