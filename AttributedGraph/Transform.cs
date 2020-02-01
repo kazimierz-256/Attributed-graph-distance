@@ -5,8 +5,8 @@ namespace AttributedGraph
 {
     public static class Transform
     {
-        public static Graph<V, VA, EA> Permute<V, VA, EA>(
-                Graph<V, VA, EA> graph,
+        public static Graph<V, VA, EA> PermuteClone<V, VA, EA>(
+                this Graph<V, VA, EA> graph,
                 Random random = null,
                 Func<V, VA, (V, VA)> cloneVertex = null,
                 Func<(V, V), EA, ((V, V), EA)> cloneEdge = null
@@ -56,7 +56,7 @@ namespace AttributedGraph
             return newGraph;
         }
         public static Graph<V, VA, EA> Clone<V, VA, EA>(
-                Graph<V, VA, EA> graph,
+                this Graph<V, VA, EA> graph,
                 Func<V, VA, (V, VA)> cloneVertex = null,
                 Func<(V, V), EA, ((V, V), EA)> cloneEdge = null
             )
@@ -84,8 +84,8 @@ namespace AttributedGraph
             return newGraph;
         }
 
-        public static void Augment<V, VA, EA>(
-                Graph<V, VA, EA> graph,
+        public static Graph<V, VA, EA> Augment<V, VA, EA>(
+                this Graph<V, VA, EA> graph,
                 int targetVertexCount,
                 Func<(V, VA)> vertexGenerator
             )
@@ -96,14 +96,45 @@ namespace AttributedGraph
                 if (!graph.ContainsVertex(vertex))
                     graph.AddVertex(vertex, attribute);
             }
+
+            return graph;
         }
 
-        public static void RemoveSmallestLast<V, VA, EA>(
-                Graph<V, VA, EA> graph,
-                int targetVertexCount
+        public static Graph<V, VA, EA> RemoveSmallestLast<V, VA, EA>(
+                this Graph<V, VA, EA> graph,
+                int targetVertexCount,
+                Func<Graph<V, VA, EA>, V, int> graphVertexToDegree = null
                 )
         {
-            throw new NotImplementedException();
+            Func<V> chooseVertexToDelete = () =>
+            {
+                var vertexWithMinNeighbours = graph.Vertices.First().Key;
+                var minNeighbours = int.MaxValue;
+                foreach (var vertexKVP in graph.Vertices)
+                {
+                    var vertexNeighbours = int.MaxValue;
+                    if (graphVertexToDegree == null)
+                    {
+                        vertexNeighbours = Math.Max(graph.OutgoingEdges[vertexKVP.Key].Count, graph.IncomingEdges[vertexKVP.Key].Count);
+                    }
+                    else
+                    {
+                        vertexNeighbours = graphVertexToDegree(graph, vertexKVP.Key);
+                    }
+
+                    if (vertexNeighbours < minNeighbours)
+                    {
+                        minNeighbours = vertexNeighbours;
+                        vertexWithMinNeighbours = vertexKVP.Key;
+                    }
+                }
+                return vertexWithMinNeighbours;
+            };
+
+            while (graph.VertexCount > targetVertexCount)
+                graph.RemoveVertex(chooseVertexToDelete());
+
+            return graph;
         }
     }
 }
