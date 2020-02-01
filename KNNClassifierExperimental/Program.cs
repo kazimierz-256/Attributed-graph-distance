@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AttributedGraph;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Postgres_enron_database.Data;
@@ -13,7 +14,7 @@ namespace KNNClassifierExperimental
             using var context = new EnronContext();
             Console.WriteLine($"{context.Emails.Count()} emails in total.");
 
-            var dataset = GenerateDataSet(context);
+            var dataset = GenerateDataSet(context, vertexUpperBound: 10);
             System.Console.WriteLine(dataset);
 
             // var emailsLocal = emails.AsEnumerable();
@@ -37,7 +38,8 @@ namespace KNNClassifierExperimental
             TimeSpan? dayLength = null,
             double trainingProportion = 7,
             double validatingProportion = 2,
-            double testingProportion = 3
+            double testingProportion = 3,
+            int vertexUpperBound = -1
             )
         {
             if (!daySplittingTimeAfter0000hrs.HasValue)
@@ -82,6 +84,14 @@ namespace KNNClassifierExperimental
             {
                 var emailsFromDate = emails2.Where(email => email.SendDate > date && email.SendDate < dateEnd);
                 var graph = EmailToGraph.GetGraph(context, emailsFromDate);
+
+                if (vertexUpperBound >= 0)
+                {
+                    graph.RemoveSmallestLast(vertexUpperBound);
+// #if DEBUG
+//                     System.Console.WriteLine($"{date.DayOfWeek}: {graph.EdgeCount}");
+// #endif
+                }
 
                 switch (datetimeToClass(date))
                 {
