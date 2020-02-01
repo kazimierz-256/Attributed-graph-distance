@@ -15,49 +15,54 @@ namespace KNNClassifierExperimental
             var enronAddresses = new HashSet<string>();
             var directedEmails = new Dictionary<(string, string), List<EmailObject>>();
             // for each email that day
-            foreach (var email in emails)
+            foreach (var triplet in
+                emails
+                .Join(
+                    context.DestinationEmails,
+                    eo => eo.Id,
+                    de => de.EmailId,
+                    (eo, de) => new { eo, de }
+                    )
+                .Join(
+                    context.EmailAddresses,
+                    (pair) => pair.de.EmailAddressId,
+                    ea => ea.Id,
+                    (pair, ea) => new { pair.eo, ea } // email object and one of the senders
+                    )
+                .Where(pair => pair.ea.BelongsToEnron)
+                .Join(
+                    context.EmailAddresses,
+                    (pair) => pair.eo.FromId,
+                    ea => ea.Id,
+                    (pair, ea) => new { pair.eo, pair.ea, eaFrom = ea }
+                    )
+                .Where(triplet => triplet.eaFrom.BelongsToEnron)
+                )
             {
-                // check if the sender is from Enron
-                var fromAddress = context.EmailAddresses.Where(ea => ea.Id == email.FromId).First();
-                if (fromAddress.BelongsToEnron)
+                var emailTo = triplet.ea;
+                var email = triplet.eo;
+                var fromAddress = triplet.eaFrom;
+
+                enronAddresses.Add(fromAddress.Address);
+                enronAddresses.Add(emailTo.Address);
+
+                var key = (fromAddress.Address, emailTo.Address);
+
+                if (directedEmails.ContainsKey(key))
                 {
-                    enronAddresses.Add(fromAddress.Address);
-                    // check if the recipient is from Enron
-                    foreach (var de in context.DestinationEmails
-                        .Where(de => de.EmailId == email.Id)
-                        .ToList()
-                        )
-                    {
-                        var emailTo = context.EmailAddresses
-                            .Where(ea => ea.Id == de.EmailAddressId && ea.BelongsToEnron)
-                            .FirstOrDefault();
-                        if (emailTo != default)
-                        {
-                            enronAddresses.Add(emailTo.Address);
-
-                            var key = (fromAddress.Address, emailTo.Address);
-
-                            if (directedEmails.ContainsKey(key))
-                            {
-                                // the same email could have been cloned to a different directory
-                                if (directedEmails[key].FirstOrDefault(em => em.SendDate == email.SendDate) == default)
-                                    directedEmails[key].Add(email);
-                            }
-                            else
-                                directedEmails.Add(key, new List<EmailObject>() { email });
-                        }
-                    }
+                    // the same email could have been cloned to a different directory
+                    if (directedEmails[key].FirstOrDefault(em => em.SendDate == email.SendDate) == default)
+                        directedEmails[key].Add(email);
                 }
+                else
+                    directedEmails.Add(key, new List<EmailObject>() { email });
             }
 
             foreach (var enronAddress in enronAddresses)
-            {
-                graph.AddVertex(enronAddress, 0);
-            }
+                graph.AddVertex(enronAddress);
+
             foreach (var directedEmailKVP in directedEmails)
-            {
                 graph.AddEdge(directedEmailKVP.Key, directedEmailKVP.Value.Count);
-            }
 
             return graph;
         }

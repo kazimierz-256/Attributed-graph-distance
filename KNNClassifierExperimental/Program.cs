@@ -47,14 +47,16 @@ namespace KNNClassifierExperimental
             if (!dayLength.HasValue)
                 dayLength = TimeSpan.FromHours(24);// could be longer than 24 hrs, but that's complicated
             var emails = context.Emails;
-            using var context2 = new EnronContext();
-            var emails2 = context2.Emails;
 
             Func<DateTime, DataSetCategory> datetimeToClass = datetime =>
             {
                 var date = datetime - daySplittingTimeAfter0000hrs.Value;
                 var random = new Random(date.Day + 31 * date.Month + 366 * date.Year);
-                var totalProportion = (double)(trainingProportion + validatingProportion + testingProportion);
+                var totalProportion = (double)(
+                                                trainingProportion
+                                                + validatingProportion
+                                                + testingProportion
+                                                );
                 var trainingThreshold = trainingProportion / totalProportion;
                 var validatingThreshold = trainingThreshold + validatingProportion / totalProportion;
 
@@ -82,15 +84,12 @@ namespace KNNClassifierExperimental
                 date += TimeSpan.FromHours(24), dateEnd += dayLength.Value
                 )
             {
-                var emailsFromDate = emails2.Where(email => email.SendDate > date && email.SendDate < dateEnd);
+                var emailsFromDate = emails.Where(email => email.SendDate > date && email.SendDate < dateEnd);
                 var graph = EmailToGraph.GetGraph(context, emailsFromDate);
 
                 if (vertexUpperBound >= 0)
                 {
                     graph.RemoveSmallestLast(vertexUpperBound);
-// #if DEBUG
-//                     System.Console.WriteLine($"{date.DayOfWeek}: {graph.EdgeCount}");
-// #endif
                 }
 
                 switch (datetimeToClass(date))
