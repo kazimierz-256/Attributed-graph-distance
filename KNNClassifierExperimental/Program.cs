@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Postgres_enron_database.Data;
 using KNNClassifier;
+using AStarGraphNode;
 
 namespace KNNClassifierExperimental
 {
@@ -16,6 +17,24 @@ namespace KNNClassifierExperimental
 
             var dataset = GenerateDataSet(context, vertexUpperBound: 10);
             System.Console.WriteLine(dataset);
+
+            var random = new Random(1);
+            // var (testGraph, testGraphLabel) = dataset.testSet[random.Next(dataset.testSet.Count)];
+
+            var matchingParameters = GraphMatchingParameters<string, double, double>.UnitCostDefault();
+
+            var k = 5;
+            foreach (var (testGraph, testGraphLabel) in dataset.testSet)
+            {
+                var classificationResult = KNNClassifier.KNNClassifier.Classify<string, double, double, DayOfWeek>(
+                    k,
+                    testGraph,
+                    dataset.trainingSet,
+                    matchingParameters
+                    );
+
+                System.Console.WriteLine($"Classified {testGraphLabel} as {classificationResult.Item1}");
+            }
 
             // var emailsLocal = emails.AsEnumerable();
             // foreach (var group in emailsLocal.GroupBy(email => (email.SendDate.Year, email.SendDate.Month)).OrderBy(group => group.Key))
@@ -30,6 +49,16 @@ namespace KNNClassifierExperimental
             Training,
             Validation,
             Testing
+        }
+
+        private static Graph<string, double, double> GetGraphFromDates(
+            EnronContext context,
+            DateTime dateFrom,
+            DateTime dateTo
+            )
+        {
+            var emailsFromDate = context.Emails.Where(email => email.SendDate > dateFrom && email.SendDate < dateTo);
+            return EmailToGraph.GetGraph(context, emailsFromDate);
         }
 
         public static DataSet<string, double, double, DayOfWeek> GenerateDataSet(
@@ -84,8 +113,7 @@ namespace KNNClassifierExperimental
                 date += TimeSpan.FromHours(24), dateEnd += dayLength.Value
                 )
             {
-                var emailsFromDate = emails.Where(email => email.SendDate > date && email.SendDate < dateEnd);
-                var graph = EmailToGraph.GetGraph(context, emailsFromDate);
+                var graph = GetGraphFromDates(context, date, dateEnd);
 
                 if (vertexUpperBound >= 0)
                 {
