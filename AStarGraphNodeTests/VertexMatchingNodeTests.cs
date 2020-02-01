@@ -29,58 +29,30 @@ namespace AStarGraphNodeTests
                 Graph<V, VA, EA> G,
                 Graph<V, VA, EA> H,
                 Func<(V, VA)> vertexGenerator,
-                Func<VA, double> vertexAdd,
-                Func<VA, VA, double> vertexRelabel,
-                Func<VA, double> vertexRemove,
-                Func<EA, double> edgeAdd,
-                Func<EA, EA, double> edgeRelabel,
-                Func<EA, double> edgeRemove,
-                ICollection<double> aCollection,
-                ICollection<double> bCollection
+                GraphMatchingParameters<V, VA, EA> matchingParameters
                 )
         {
             var gClone = G.Clone().Augment(G.VertexCount + H.VertexCount, vertexGenerator);
             var hClone = H.Clone().Augment(G.VertexCount + H.VertexCount, vertexGenerator);
 
+            matchingParameters.encodingMethod = GraphEncodingMethod.Wojciechowski;
             var matching1 = new VertexPartialMatchingNode<V, VA, EA>(
                 gClone,
                 hClone,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                aCollection,
-                aCollection,
-                encodingMethod: GraphEncodingMethod.Wojciechowski
-            // encodingMethod: encodingMethod
+                matchingParameters
             );
+            matchingParameters.encodingMethod = GraphEncodingMethod.Wojciechowski;
+
             var matching3 = new VertexPartialMatchingNode<V, VA, EA>(
                 G,
                 H,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                aCollection,
-                aCollection,
-                encodingMethod: GraphEncodingMethod.Wojciechowski
+                matchingParameters
             );
+            matchingParameters.encodingMethod = GraphEncodingMethod.RiesenBunke2009;
             var matching2 = new VertexPartialMatchingNode<V, VA, EA>(
                 G,
                 H,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                aCollection,
-                aCollection,
-                encodingMethod: GraphEncodingMethod.RiesenBunke2009
+                matchingParameters
             );
 
             Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
@@ -93,29 +65,13 @@ namespace AStarGraphNodeTests
                 Func<(V, VA)> vertexGenerator,
                 Graph<V, VA, EA> G,
                 Graph<V, VA, EA> H,
-                Func<VA, double> vertexAdd,
-                Func<VA, VA, double> vertexRelabel,
-                Func<VA, double> vertexRemove,
-                Func<EA, double> edgeAdd,
-                Func<EA, EA, double> edgeRelabel,
-                Func<EA, double> edgeRemove,
-                ICollection<double> aCollection,
-                ICollection<double> bCollection,
-                GraphEncodingMethod encodingMethod = GraphEncodingMethod.Wojciechowski
+                GraphMatchingParameters<V, VA, EA> matchingParameters
                 )
         {
             var matching1 = new VertexPartialMatchingNode<V, VA, EA>(
                 G,
                 H,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                aCollection,
-                aCollection,
-                encodingMethod: encodingMethod
+                matchingParameters
             );
             var gClone = G.Clone();
             var hClone = H.Clone();
@@ -125,15 +81,7 @@ namespace AStarGraphNodeTests
             var matching2 = new VertexPartialMatchingNode<V, VA, EA>(
                 gClone,
                 hClone,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                aCollection,
-                aCollection,
-                encodingMethod: encodingMethod
+                matchingParameters
             );
 
             Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
@@ -179,21 +127,25 @@ namespace AStarGraphNodeTests
                     GraphEncodingMethod.RiesenBunke2009,
                 })
             {
+                var matchingParameters = new GraphMatchingParameters<int, double, double>
+                {
+                    aCollection = a,
+                    bCollection = b,
+                    edgeAdd = edgeAdd,
+                    vertexAdd = vertexAdd,
+                    edgeRelabel = edgeRelabel,
+                    edgeRemove = edgeRemove,
+                    vertexRemove = vertexRemove,
+                    vertexRelabel = vertexRelabel,
+                    encodingMethod = encoding
+                };
                 var matching1 = AugmentationMatches<int, double, double>(
                     Math.Max(G.VertexCount, H.VertexCount),
                     random,
                     vertexGenerator,
                     G,
                     H,
-                    vertexAdd,
-                    vertexRelabel,
-                    vertexRemove,
-                    edgeAdd,
-                    edgeRelabel,
-                    edgeRemove,
-                    a,
-                    b,
-                    encodingMethod: encoding
+                    matchingParameters
                     );
                 var matching2 = AugmentationMatches<int, double, double>(
                     H.VertexCount + G.VertexCount,
@@ -201,15 +153,7 @@ namespace AStarGraphNodeTests
                     vertexGenerator,
                     G,
                     H,
-                    vertexAdd,
-                    vertexRelabel,
-                    vertexRemove,
-                    edgeAdd,
-                    edgeRelabel,
-                    edgeRemove,
-                    a,
-                    b,
-                    encodingMethod: encoding
+                    matchingParameters
                     );
                 Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
             }
@@ -250,18 +194,23 @@ namespace AStarGraphNodeTests
             var b = new List<double>() { .5 };
 
             Func<(int, double)> vertexGenerator = () => (random.Next(), 0d);
+            var matchingParameters = new GraphMatchingParameters<int, double, double>
+            {
+                aCollection = new List<double>() { 1 },
+                bCollection = new List<double>() { .5 },
+                edgeAdd = edgeAdd,
+                vertexAdd = vertexAdd,
+                edgeRelabel = edgeRelabel,
+                edgeRemove = edgeRemove,
+                vertexRemove = vertexRemove,
+                vertexRelabel = vertexRelabel
+            };
             EncodingsMatch<int, double, double>(
                 G,
                 H,
                 vertexGenerator,
-                vertexAdd,
-                vertexRelabel,
-                vertexRemove,
-                edgeAdd,
-                edgeRelabel,
-                edgeRemove,
-                a,
-                b);
+                matchingParameters
+                );
         }
     }
 }
