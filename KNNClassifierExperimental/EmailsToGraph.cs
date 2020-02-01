@@ -14,31 +14,39 @@ namespace KNNClassifierExperimental
             var graph = new Graph<string, double, double>(directed: true);
             var enronAddresses = new HashSet<string>();
             var directedEmails = new Dictionary<(string, string), List<EmailObject>>();
-
+            // for each email that day
             foreach (var email in emails)
             {
+                // check if the sender is from Enron
                 var fromAddress = context.EmailAddresses.Where(ea => ea.Id == email.FromId).First();
                 if (fromAddress.BelongsToEnron)
                 {
                     enronAddresses.Add(fromAddress.Address);
-                    foreach (var emailTo in context.DestinationEmails
+                    // check if the recipient is from Enron
+                    foreach (var de in context.DestinationEmails
                         .Where(de => de.EmailId == email.Id)
-                        .Select(de => context.EmailAddresses.Where(ea => ea.Id == de.EmailAddressId).First())
-                        .Where(ea => ea.BelongsToEnron))
+                        .ToList()
+                        )
                     {
-                        enronAddresses.Add(emailTo.Address);
-
-                        var key = (fromAddress.Address, emailTo.Address);
-
-                        if (directedEmails.ContainsKey(key))
+                        var emailTo = context.EmailAddresses
+                            .Where(ea => ea.Id == de.EmailAddressId && ea.BelongsToEnron)
+                            .FirstOrDefault();
+                        if (emailTo != default)
                         {
-                            // the same email could have been cloned to a different directory
-                            if (directedEmails[key].FirstOrDefault(em => em.SendDate == email.SendDate) == default)
-                               directedEmails[key].Add(email);
+                            enronAddresses.Add(emailTo.Address);
+
+                            var key = (fromAddress.Address, emailTo.Address);
+
+                            if (directedEmails.ContainsKey(key))
+                            {
+                                // the same email could have been cloned to a different directory
+                                if (directedEmails[key].FirstOrDefault(em => em.SendDate == email.SendDate) == default)
+                                    directedEmails[key].Add(email);
+                            }
+                            else
+                                directedEmails.Add(key, new List<EmailObject>() { email });
                         }
-                        else
-                            directedEmails.Add(key, new List<EmailObject>() { email });
-                    };
+                    }
                 }
             }
 
