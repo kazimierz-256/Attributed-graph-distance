@@ -112,19 +112,19 @@ namespace AttributedGraph
                 var minNeighbours = int.MaxValue;
                 foreach (var vertexKVP in graph.Vertices)
                 {
-                    var vertexNeighbours = int.MaxValue;
+                    var vertexNeighbourCount = int.MaxValue;
                     if (graphVertexToDegree == null)
                     {
-                        vertexNeighbours = Math.Max(graph.OutgoingEdges[vertexKVP.Key].Count, graph.IncomingEdges[vertexKVP.Key].Count);
+                        vertexNeighbourCount = Math.Max(graph.OutgoingEdges[vertexKVP.Key].Count, graph.IncomingEdges[vertexKVP.Key].Count);
                     }
                     else
                     {
-                        vertexNeighbours = graphVertexToDegree(graph, vertexKVP.Key);
+                        vertexNeighbourCount = graphVertexToDegree(graph, vertexKVP.Key);
                     }
 
-                    if (vertexNeighbours < minNeighbours)
+                    if (vertexNeighbourCount < minNeighbours)
                     {
-                        minNeighbours = vertexNeighbours;
+                        minNeighbours = vertexNeighbourCount;
                         vertexWithMinNeighbours = vertexKVP.Key;
                     }
                 }
