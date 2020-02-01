@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Postgres_enron_database\Postgres_enron_database.csproj" />
+    <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
