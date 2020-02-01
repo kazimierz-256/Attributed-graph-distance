@@ -6,9 +6,8 @@ namespace AttributedGraph
     public class Graph<V, VA, EA>
     {
         public readonly Dictionary<V, VA> Vertices = new Dictionary<V, VA>();
-        // TODO: create outgoing and incoming edge data structures
-        public readonly Dictionary<V, List<V>> OutgoingEdges = new Dictionary<V, List<V>>();
-        public readonly Dictionary<V, List<V>> IncomingEdges = new Dictionary<V, List<V>>();
+        public readonly Dictionary<V, HashSet<V>> OutgoingEdges = new Dictionary<V, HashSet<V>>();
+        public readonly Dictionary<V, HashSet<V>> IncomingEdges = new Dictionary<V, HashSet<V>>();
         public readonly Dictionary<(V, V), EA> Edges = new Dictionary<(V, V), EA>();
         private readonly bool directed;
 
@@ -19,21 +18,43 @@ namespace AttributedGraph
         public void AddEdge((V, V) edge, EA edgeAttribute)
         {
             Edges.Add(edge, edgeAttribute);
+            OutgoingEdges[edge.Item1].Add(edge.Item2);
             if (!directed)
             {
                 var (u, v) = edge;
                 Edges.Add((v, u), edgeAttribute);
+                IncomingEdges[edge.Item2].Add(edge.Item1);
             }
         }
         public void RemoveEdge((V, V) edge)
-            => Edges.Remove(edge);
+        {
+            Edges.Remove(edge);
+            OutgoingEdges[edge.Item1].Remove(edge.Item2);
+            if (!directed)
+            {
+                var (u, v) = edge;
+                Edges.Remove((v, u));
+                IncomingEdges[edge.Item2].Remove(edge.Item1);
+            }
+        }
         public bool ContainsEdge((V, V) edge)
             => Edges.ContainsKey(edge);
         public void AddVertex(V vertex, VA vertexAttribute)
-            => Vertices.Add(vertex, vertexAttribute);
-        // IMPORTANT TODO: when removeing a vertex, remove adjacent edges too!
+        {
+            Vertices.Add(vertex, vertexAttribute);
+            OutgoingEdges.Add(vertex, new HashSet<V>());
+            IncomingEdges.Add(vertex, new HashSet<V>());
+        }
         public void RemoveVertex(V vertex)
-            => Vertices.Remove(vertex);
+        {
+            foreach (var neighbour in OutgoingEdges[vertex])
+                Edges.Remove((vertex, neighbour));
+            foreach (var neighbour in IncomingEdges[vertex])
+                Edges.Remove((neighbour, vertex));
+            OutgoingEdges.Remove(vertex);
+            IncomingEdges.Remove(vertex);
+            Vertices.Remove(vertex);
+        }
         public bool ContainsVertex(V vertex)
             => Vertices.ContainsKey(vertex);
 
