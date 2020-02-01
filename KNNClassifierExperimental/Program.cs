@@ -11,10 +11,11 @@ namespace KNNClassifierExperimental
         static void Main(string[] args)
         {
             using var context = new EnronContext();
+            Console.WriteLine($"{context.Emails.Count()} emails in total.");
+
             var dataset = GenerateDataSet(context);
             System.Console.WriteLine(dataset);
 
-            Console.WriteLine(emails.Count());
             // var emailsLocal = emails.AsEnumerable();
             // foreach (var group in emailsLocal.GroupBy(email => (email.SendDate.Year, email.SendDate.Month)).OrderBy(group => group.Key))
             // {
