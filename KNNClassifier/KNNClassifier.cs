@@ -8,37 +8,22 @@ namespace KNNClassifier
 {
     public class KNNClassifier
     {
-        public static (int, List<(VertexPartialMatchingNode<V, VA, EA>, int)>) Classify<V, VA, EA>(
+        public static (C, List<(VertexPartialMatchingNode<V, VA, EA>, C)>) Classify<V, VA, EA, C>(
                 int k,
                 Graph<V, VA, EA> G,
-                ICollection<(Graph<V, VA, EA>, int)> graphsPreclassified,
-                Func<VA, double> vertexAdd,
-                Func<VA, VA, double> vertexRelabel,
-                Func<VA, double> vertexRemove,
-                Func<EA, double> edgeAdd,
-                Func<EA, EA, double> edgeRelabel,
-                Func<EA, double> edgeRemove,
-                ICollection<double> a,
-                ICollection<double> b,
-                GraphEncodingMethod encodingMethod = GraphEncodingMethod.Wojciechowski)
+                IEnumerable<(Graph<V, VA, EA>, C)> graphsPreclassified,
+                GraphMatchingParameters<V, VA, EA> matchingParameters
+                )
         {
             // determine distances between G and H graphs
-            var matchingClassPairs = new List<(VertexPartialMatchingNode<V, VA, EA>, int)>();
+            var matchingClassPairs = new List<(VertexPartialMatchingNode<V, VA, EA>, C)>();
 
             foreach (var (H, classID) in graphsPreclassified)
             {
                 var matching = new VertexPartialMatchingNode<V, VA, EA>(
                     G,
                     H,
-                    vertexAdd,
-                    vertexRelabel,
-                    vertexRemove,
-                    edgeAdd,
-                    edgeRelabel,
-                    edgeRemove,
-                    a,
-                    b,
-                    encodingMethod: encodingMethod
+                    matchingParameters
                 );
 
                 matchingClassPairs.Add((matching, classID));
@@ -47,7 +32,7 @@ namespace KNNClassifier
             // determine the k closest graphs to G
             matchingClassPairs.Sort((pair1, pair2) => pair1.Item1.LowerBound.CompareTo(pair2.Item1.LowerBound));
 
-            var classCount = new Dictionary<int, int>();
+            var classCount = new Dictionary<C, int>();
 
             var fixedK = Math.Min(k, matchingClassPairs.Count);
             for (int i = 0; ;)
@@ -78,7 +63,7 @@ namespace KNNClassifier
             }
 
             // determine the class of G (most frequently occuring within the k closest graphs)
-            var majorityClass = -1;
+            var majorityClass = default(C);
             var majorityCount = -1;
 
             foreach (var kvp in classCount)
