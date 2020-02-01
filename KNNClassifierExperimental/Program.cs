@@ -12,7 +12,7 @@ namespace KNNClassifierExperimental
             using var context = new EnronContext();
             var beginDate = DateTime.Parse("1999 Dec 01");// first occurrence of exchanging more than 3000 emails per month
             var bankruptcyDate = DateTime.Parse("2001 Dec 03");
-            var daySplittingHour = 4;
+            var daySplittingTimeAfter0000hrs = TimeSpan.FromHours(4);
             var years = Enumerable.Range(2000, 2);
             var emails = context.Emails;
             var emailsLocal = emails.AsEnumerable();
@@ -30,7 +30,7 @@ namespace KNNClassifierExperimental
 
             Func<DateTime, int> datetimeToClass = datetime =>
             {
-                var date = datetime - TimeSpan.FromHours(daySplittingHour);
+                var date = datetime - daySplittingTimeAfter0000hrs;
                 var random = new Random(date.Day + 31 * date.Month + 366 * date.Year);
                 var totalProportion = (double)(testingProportion + validatingProportion + testingProportion);
                 var trainingThreshold = trainingProportion / totalProportion;
@@ -44,11 +44,10 @@ namespace KNNClassifierExperimental
                     return 2;
             };
 
-            var randomDay = $"2000 Mar 20 {daySplittingHour}:00";
-            var randomDateFrom = DateTime.Parse(randomDay);
+            var randomDay = $"2000 Mar 20";
+            var randomDateFrom = DateTime.Parse(randomDay) + daySplittingTimeAfter0000hrs;
             var randomDateTo = randomDateFrom.AddHours(24);
             var emailsFromRandomDay = emails.Where(email => email.SendDate > randomDateFrom && email.SendDate < randomDateTo);
-            System.Console.WriteLine(emailsFromRandomDay.Count());
 
             var graph = EmailToGraph.GetGraph(context, emailsFromRandomDay);
 
