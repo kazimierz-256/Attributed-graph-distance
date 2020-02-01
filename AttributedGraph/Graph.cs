@@ -17,6 +17,12 @@ namespace AttributedGraph
         }
         public void AddEdge((V, V) edge, EA edgeAttribute)
         {
+            if (ContainsEdge(edge))
+                throw new Exception("The edge being added already exists in the graph");
+
+            if (!ContainsVertex(edge.Item1) || !ContainsVertex(edge.Item2))
+                throw new Exception("Tried to add an edge but no such adjacent vertex exist");
+
             Edges.Add(edge, edgeAttribute);
             OutgoingEdges[edge.Item1].Add(edge.Item2);
             if (!directed)
@@ -28,6 +34,9 @@ namespace AttributedGraph
         }
         public void RemoveEdge((V, V) edge)
         {
+            if (!ContainsEdge(edge))
+                throw new Exception("The edge being deleted does not exists in the graph");
+
             Edges.Remove(edge);
             OutgoingEdges[edge.Item1].Remove(edge.Item2);
             if (!directed)
@@ -39,14 +48,20 @@ namespace AttributedGraph
         }
         public bool ContainsEdge((V, V) edge)
             => Edges.ContainsKey(edge);
-        public void AddVertex(V vertex, VA vertexAttribute)
+        public void AddVertex(V vertex, VA vertexAttribute = default)
         {
+            if (ContainsVertex(vertex))
+                throw new Exception("Vertex being added already exists in the graph");
+
             Vertices.Add(vertex, vertexAttribute);
             OutgoingEdges.Add(vertex, new HashSet<V>());
             IncomingEdges.Add(vertex, new HashSet<V>());
         }
         public void RemoveVertex(V vertex)
         {
+            if (!Vertices.ContainsKey(vertex))
+                throw new Exception("Vertex being deleted does not exists in the graph");
+
             foreach (var neighbour in OutgoingEdges[vertex])
                 Edges.Remove((vertex, neighbour));
             foreach (var neighbour in IncomingEdges[vertex])
