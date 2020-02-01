@@ -39,10 +39,8 @@ namespace AStarGraphNodeTests
                 ICollection<double> bCollection
                 )
         {
-            var gClone = Transform.Clone(G);
-            var hClone = Transform.Clone(H);
-            Transform.Augment<V, VA, EA>(gClone, G.VertexCount + H.VertexCount, vertexGenerator);
-            Transform.Augment<V, VA, EA>(hClone, G.VertexCount + H.VertexCount, vertexGenerator);
+            var gClone = G.Clone().Augment(G.VertexCount + H.VertexCount, vertexGenerator);
+            var hClone = H.Clone().Augment(G.VertexCount + H.VertexCount, vertexGenerator);
 
             var matching1 = new VertexPartialMatchingNode<V, VA, EA>(
                 gClone,
@@ -119,8 +117,8 @@ namespace AStarGraphNodeTests
                 aCollection,
                 encodingMethod: encodingMethod
             );
-            var gClone = Transform.Clone(G);
-            var hClone = Transform.Clone(H);
+            var gClone = G.Clone();
+            var hClone = H.Clone();
             Transform.Augment(gClone, m, vertexGenerator);
             Transform.Augment(hClone, m, vertexGenerator);
 
