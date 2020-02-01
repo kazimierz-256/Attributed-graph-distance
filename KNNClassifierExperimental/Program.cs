@@ -31,7 +31,7 @@ namespace KNNClassifierExperimental
             Testing
         }
 
-        public static DataSet<string, double, double> GenerateDataSet(
+        public static DataSet<string, double, double, DayOfWeek> GenerateDataSet(
             EnronContext context,
             TimeSpan? daySplittingTimeAfter0000hrs = null,
             TimeSpan? dayLength = null,
@@ -72,7 +72,7 @@ namespace KNNClassifierExperimental
             var beginDate = viableTimespan.from + daySplittingTimeAfter0000hrs.Value;
             var endDate = viableTimespan.to + daySplittingTimeAfter0000hrs.Value;
 
-            var dataSetToReturn = new DataSet<string, double, double>();
+            var dataSetToReturn = new DataSet<string, double, double, DayOfWeek>();
 
             for (
                 DateTime date = beginDate, dateEnd = beginDate + dayLength.Value;
@@ -86,13 +86,13 @@ namespace KNNClassifierExperimental
                 switch (datetimeToClass(date))
                 {
                     case DataSetCategory.Training:
-                        dataSetToReturn.trainingSet.Add(graph);
+                        dataSetToReturn.trainingSet.Add((graph, date.DayOfWeek));
                         break;
                     case DataSetCategory.Validation:
-                        dataSetToReturn.validationSet.Add(graph);
+                        dataSetToReturn.validationSet.Add((graph, date.DayOfWeek));
                         break;
                     case DataSetCategory.Testing:
-                        dataSetToReturn.testSet.Add(graph);
+                        dataSetToReturn.testSet.Add((graph, date.DayOfWeek));
                         break;
                     default:
                         throw new NotImplementedException("Unknown dataset category");
