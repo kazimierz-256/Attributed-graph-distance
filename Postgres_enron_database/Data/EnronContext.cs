@@ -18,11 +18,19 @@ namespace Postgres_enron_database.Data
                 .HasKey(e => new { e.EmailId, e.EmailAddressId, e.SendType});
             modelBuilder.Entity<DestinationEmail>()
                 .HasIndex(e => e.SendType);
+
             modelBuilder.Entity<EmailAddress>()
                 .Property(ea => ea.Id)
                 .ValueGeneratedOnAdd();
+            modelBuilder.Entity<EmailAddress>()
+                .HasIndex(ea => ea.BelongsToEnron);
+            modelBuilder.Entity<EmailAddress>()
+                .HasIndex(ea => ea.Id);
+
             modelBuilder.Entity<EmailObject>()
                 .HasIndex(eo => eo.URL).IsUnique();
+            modelBuilder.Entity<EmailObject>()
+                .HasIndex(eo => eo.Id);
             modelBuilder.Entity<EmailObject>()
                 .HasIndex(eo => eo.FromId);
             modelBuilder.Entity<EmailObject>()

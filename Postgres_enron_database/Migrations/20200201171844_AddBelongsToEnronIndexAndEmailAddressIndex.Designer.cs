@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Postgres_enron_database.Data;
@@ -9,9 +10,10 @@ using Postgres_enron_database.Data;
 namespace Postgres_enron_database.Migrations
 {
     [DbContext(typeof(EnronContext))]
-    partial class EnronContextModelSnapshot : ModelSnapshot
+    [Migration("20200201171844_AddBelongsToEnronIndexAndEmailAddressIndex")]
+    partial class AddBelongsToEnronIndexAndEmailAddressIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,8 +82,6 @@ namespace Postgres_enron_database.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FromId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("SendDate");
 
