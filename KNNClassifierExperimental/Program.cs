@@ -5,6 +5,7 @@ using System.Linq;
 using Postgres_enron_database.Data;
 using KNNClassifier;
 using AStarGraphNode;
+using System.Text;
 
 namespace KNNClassifierExperimental
 {
@@ -15,25 +16,38 @@ namespace KNNClassifierExperimental
             using var context = new EnronContext();
             Console.WriteLine($"{context.Emails.Count()} emails in total.");
 
-            var dataset = GenerateDataSet(context, vertexUpperBound: 10);
+            var vertexUpperBound = 10;
+            var k = 5;
+
+            var dataset = GenerateDataSet(context, vertexUpperBound: vertexUpperBound);
             System.Console.WriteLine(dataset);
 
-            var random = new Random(1);
             // var (testGraph, testGraphLabel) = dataset.testSet[random.Next(dataset.testSet.Count)];
+            Func<VertexPartialMatchingNode<string, double, double>, double> matchingFeatureSelector = matching => matching.UpperBound;
+            var matchingParameters = GraphMatchingParameters<string, double, double>.DoubleCostComposer(
+                    CostType.AbsoluteValue,
+                    CostType.AbsoluteValue
+                );
+            
 
-            var matchingParameters = GraphMatchingParameters<string, double, double>.UnitCostDefault();
-
-            var k = 5;
             foreach (var (testGraph, testGraphLabel) in dataset.testSet)
             {
                 var classificationResult = KNNClassifier.KNNClassifier.Classify<string, double, double, DayOfWeek>(
-                    k,
+                    (position, distance) => Math.Exp(-distance * distance), // position < k ? Math.Exp(-distance) : 0,
                     testGraph,
                     dataset.trainingSet,
-                    matchingParameters
+                    matchingParameters,
+                    k: k,
+                    matchingFeatureSelector: matchingFeatureSelector
                     );
+                var results = new StringBuilder();
 
-                System.Console.WriteLine($"Classified {testGraphLabel} as {classificationResult.Item1}");
+                foreach (var item in classificationResult.Item2.Take(2 * k))
+                {
+                    results.Append($"({item.Item2}, {matchingFeatureSelector(item.Item1):f2}) ");
+                }
+                // System.Console.WriteLine($"Classified {testGraphLabel} as {classificationResult.Item1}");
+                System.Console.WriteLine($"{testGraphLabel}: {classificationResult.Item1}. Peek: {results}");
             }
 
             // var emailsLocal = emails.AsEnumerable();
@@ -68,7 +82,8 @@ namespace KNNClassifierExperimental
             double trainingProportion = 7,
             double validatingProportion = 2,
             double testingProportion = 3,
-            int vertexUpperBound = -1
+            int vertexUpperBound = -1,
+            int randomSeed = 0
             )
         {
             if (!daySplittingTimeAfter0000hrs.HasValue)
@@ -80,7 +95,10 @@ namespace KNNClassifierExperimental
             Func<DateTime, DataSetCategory> datetimeToClass = datetime =>
             {
                 var date = datetime - daySplittingTimeAfter0000hrs.Value;
-                var random = new Random(date.Day + 31 * date.Month + 366 * date.Year);
+                var random = new Random(
+                        (new Random(randomSeed).Next() - 2_000_000)
+                        + (date.Day + 31 * date.Month + 366 * date.Year)
+                    );
                 var totalProportion = (double)(
                                                 trainingProportion
                                                 + validatingProportion
