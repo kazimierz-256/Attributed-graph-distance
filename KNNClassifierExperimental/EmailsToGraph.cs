@@ -41,7 +41,15 @@ namespace KNNClassifierExperimental
                     };
                 }
             }
-            // throw new NotImplementedException();
+
+            foreach (var enronAddress in enronAddresses)
+            {
+                graph.AddVertex(enronAddress, 0);
+            }
+            foreach (var directedEmailKVP in directedEmails)
+            {
+                graph.AddEdge(directedEmailKVP.Key, directedEmailKVP.Value.Count);
+            }
 
             return graph;
         }
