@@ -25,7 +25,7 @@ namespace AttributedGraph
 
             Edges.Add(edge, edgeAttribute);
             OutgoingEdges[edge.Item1].Add(edge.Item2);
-            if (!directed)
+            if (!directed && !edge.Item1.Equals(edge.Item2))
             {
                 var (u, v) = edge;
                 Edges.Add((v, u), edgeAttribute);
@@ -39,7 +39,7 @@ namespace AttributedGraph
 
             Edges.Remove(edge);
             OutgoingEdges[edge.Item1].Remove(edge.Item2);
-            if (!directed)
+            if (!directed && !edge.Item1.Equals(edge.Item2))
             {
                 var (u, v) = edge;
                 Edges.Remove((v, u));
@@ -47,7 +47,14 @@ namespace AttributedGraph
             }
         }
         public bool ContainsEdge((V, V) edge)
-            => Edges.ContainsKey(edge);
+        {
+            if (Edges.ContainsKey(edge))
+                return true;
+            else if (!Directed)
+                return Edges.ContainsKey((edge.Item2, edge.Item1));
+            else
+                return false;
+        }
         public void AddVertex(V vertex, VA vertexAttribute = default)
         {
             if (ContainsVertex(vertex))
@@ -90,20 +97,24 @@ namespace AttributedGraph
         }
         public EA this[(V, V) edge]
         {
-            get { return Edges[edge]; }
+            get
+            {
+                if (Edges.ContainsKey(edge))
+                    return Edges[edge];
+                else if (!Directed)
+                    return Edges[(edge.Item2, edge.Item1)];
+                else
+                    throw new Exception("No such edge exists in the graph");
+            }
             set
             {
                 var (u, v) = edge;
-                if (!Edges.ContainsKey(edge))
-                {
-                    Edges.Add(edge, value);
-                    if (!directed)
-                        Edges.Add((v, u), value);
-                }
+                if (!ContainsEdge(edge))
+                    AddEdge(edge, value);
                 else
                 {
                     Edges[edge] = value;
-                    if (!directed)
+                    if (!directed && !u.Equals(v))
                         Edges[(v, u)] = value;
                 }
             }
