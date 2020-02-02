@@ -62,7 +62,17 @@ namespace KNNClassifierExperimental
                 graph.AddVertex(enronAddress);
 
             foreach (var directedEmailKVP in directedEmails)
-                graph.AddEdge(directedEmailKVP.Key, directedEmailKVP.Value.Count);
+            {
+                var edge = directedEmailKVP.Key;
+                if (!graph.Directed && graph.ContainsEdge(edge))
+                {
+                    graph[edge] = Math.Min(graph[edge], directedEmailKVP.Value.Count);
+                }
+                else
+                {
+                    graph.AddEdge(edge, directedEmailKVP.Value.Count);
+                }
+            }
 
             return graph;
         }
