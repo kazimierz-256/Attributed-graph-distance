@@ -9,8 +9,8 @@ namespace AStarGraphNode
 {
     public class VertexPartialMatchingNode<V, VA, EA> : INode
     {
-        private readonly Graph<V, VA, EA> G;
-        private readonly Graph<V, VA, EA> H;
+        public readonly Graph<V, VA, EA> G;
+        public readonly Graph<V, VA, EA> H;
         private readonly List<(V, V)> preassignedVertices;
 
         public int CompareTo(object obj)
