@@ -23,15 +23,15 @@ namespace AStarGraphNode
         public static GraphMatchingParameters<V, double, double> DoubleCostComposer(
             CostType vertexCostType,
             CostType edgeCostType,
-            List<object> vertexParameters = default,
-            List<object> edgeParameters = default
+            List<double> vertexParameters = default,
+            List<double> edgeParameters = default
             )
         {
             var parameters = new GraphMatchingParameters<V, double, double>();
 
-            Func<List<object>, int, object, object> getParameterDefault = (list, index, defaultValue) =>
+            Func<List<double>, int, double, double> getParameterDefault = (list, index, defaultValue) =>
             {
-                if (index < list.Count)
+                if (list != null && index < list.Count)
                     return list[index];
                 else
                     return defaultValue;
@@ -81,25 +81,25 @@ namespace AStarGraphNode
                         );
                     parameters.vertexRelabel = (a1, a2) => bound(
                         Math.Abs(a1 - a2),
-                        (double)getParameterDefault(vertexParameters, 0, 1),
-                        (double)getParameterDefault(vertexParameters, 1, 1)
+                        getParameterDefault(vertexParameters, 0, 1),
+                        getParameterDefault(vertexParameters, 1, 1)
                         );
 
 
                     parameters.edgeAdd = a => bound(
                         Math.Abs(a),
-                        (double)getParameterDefault(edgeParameters, 0, 1),
-                        (double)getParameterDefault(edgeParameters, 1, 1)
+                        getParameterDefault(edgeParameters, 0, 1),
+                        getParameterDefault(edgeParameters, 1, 1)
                         );
                     parameters.edgeRemove = a => bound(
                         Math.Abs(a),
-                        (double)getParameterDefault(edgeParameters, 0, 1),
-                        (double)getParameterDefault(edgeParameters, 1, 1)
+                        getParameterDefault(edgeParameters, 0, 1),
+                        getParameterDefault(edgeParameters, 1, 1)
                         );
                     parameters.edgeRelabel = (a1, a2) => bound(
                         Math.Abs(a1 - a2),
-                        (double)getParameterDefault(edgeParameters, 0, 1),
-                        (double)getParameterDefault(edgeParameters, 1, 1)
+                        getParameterDefault(edgeParameters, 0, 1),
+                        getParameterDefault(edgeParameters, 1, 1)
                         );
 
                     break;
