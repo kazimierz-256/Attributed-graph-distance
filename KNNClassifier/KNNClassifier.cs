@@ -3,17 +3,17 @@ using AStarGraphNode;
 using System.Collections.Generic;
 using AttributedGraph;
 using System.Linq;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace KNNClassifier
 {
     public class KNNClassifier
     {
-        public static (C, List<(VertexPartialMatchingNode<V, VA, EA>, C)>) Classify<V, VA, EA, C>(
-                Func<int, double, double> distanceScorer,
+        public static List<(VertexPartialMatchingNode<V, VA, EA> graph, C originalClass)> FindClosest<V, VA, EA, C>(
                 Graph<V, VA, EA> G,
-                IEnumerable<(Graph<V, VA, EA>, C)> graphsPreclassified,
+                List<(Graph<V, VA, EA>, C)> graphsPreclassified,
                 GraphMatchingParameters<V, VA, EA> matchingParameters,
-                int k = int.MaxValue,
                 Func<VertexPartialMatchingNode<V, VA, EA>, double> matchingFeatureSelector = null
                 )
         {
@@ -21,22 +21,42 @@ namespace KNNClassifier
                 matchingFeatureSelector = matching => matching.LowerBound;
 
             // determine distances between G and H graphs
-            var matchingClassPairs = new List<(VertexPartialMatchingNode<V, VA, EA>, C)>();
+            var matchingClassPairsBag = new ConcurrentBag<(VertexPartialMatchingNode<V, VA, EA>, C)>();
 
-            foreach (var (H, classID) in graphsPreclassified)
+            Parallel.For(0, graphsPreclassified.Count, i =>
             {
+                var (H, classID) = graphsPreclassified[i];
                 var matching = new VertexPartialMatchingNode<V, VA, EA>(
                     G,
                     H,
                     matchingParameters
                 );
 
-                matchingClassPairs.Add((matching, classID));
-            }
+                matchingClassPairsBag.Add((matching, classID));
+            });
+            var matchingClassPairs = matchingClassPairsBag.ToList();
+            // foreach (var (H, classID) in graphsPreclassified)
+            // {
+            //     var matching = new VertexPartialMatchingNode<V, VA, EA>(
+            //         G,
+            //         H,
+            //         matchingParameters
+            //     );
+
+            //     matchingClassPairs.Add((matching, classID));
+            // }
 
             // determine the k closest graphs to G
             matchingClassPairs.Sort((pair1, pair2) => matchingFeatureSelector(pair1.Item1).CompareTo(matchingFeatureSelector(pair2.Item1)));
 
+            return matchingClassPairs;
+        }
+        public static (C graphClass, List<(VertexPartialMatchingNode<V, VA, EA> graph, C originalClass)> matchedGraphs) Classify<V, VA, EA, C>(
+                List<(VertexPartialMatchingNode<V, VA, EA> graph, C originalClass)> matchingClassPairs,
+                Func<int, VertexPartialMatchingNode<V, VA, EA>, double> distanceScorer,
+                int k = int.MaxValue
+                )
+        {
             var classScores = new Dictionary<C, double>();
 
             var fixedK = Math.Min(k, matchingClassPairs.Count);
@@ -47,13 +67,13 @@ namespace KNNClassifier
                 if (!classScores.ContainsKey(classID))
                     classScores.Add(classID, 0);
 
-                classScores[classID] += distanceScorer(i, matchingFeatureSelector(H));
+                classScores[classID] += distanceScorer(i, H);
 
                 // stop if the following graphs have index > k and they are farther from the query graph
                 i += 1;
                 if (i >= fixedK)
                 {
-                    if (i < matchingClassPairs.Count && matchingFeatureSelector(matchingClassPairs[i].Item1) == matchingFeatureSelector(matchingClassPairs[fixedK - 1].Item1))
+                    if (i < matchingClassPairs.Count && distanceScorer(i, matchingClassPairs[i].Item1) == distanceScorer(fixedK - 1, matchingClassPairs[fixedK - 1].Item1))
                     {
                         continue;
                     }
