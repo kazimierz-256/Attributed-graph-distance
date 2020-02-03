@@ -6,3 +6,5 @@
 bin/
 obj/
 .vscode/
+KNNClassifierExperimental/top_results.txt
+KNNClassifierExperimental/top_top_results.txt
