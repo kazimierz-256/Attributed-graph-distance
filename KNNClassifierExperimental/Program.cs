@@ -16,147 +16,206 @@ namespace KNNClassifierExperimental
             using var context = new EnronContext();
             Console.WriteLine($"{context.Emails.Count()} emails in total.");
 
-            var vertexUpperBound = 6;
+            // var resultsFilePath = "./results.txt";
+            var topResultsFilePath = "./top_results.txt";
+            var topTopResultsFilePath = "./top_top_results.txt";
 
-            var randomSeeds = new int[] { 0, 1, 2, 3 };
-
-            var results = new Dictionary<(int k, string distanceScorerName), (double testAccuracy, double validationAccuracy)>();
-
-            for (int iteration = 0; ; iteration++)
+            var matchingFeatureSelectors = new List<(string, Func<VertexPartialMatchingNode<string, double, double>, double>)>()
             {
-                var dataset = GenerateDataSet(
-                    context,
-                    trainingProportion: 8,
-                    validatingProportion: 1,
-                    testingProportion: 1,
-                    vertexUpperBound: vertexUpperBound,
-                    randomSeed: iteration
-                    );
+                ("Upper bound", matching => matching.UpperBound),
+                ("Lower bound", matching => matching.LowerBound)
+            };
 
-                // var (testGraph, testGraphLabel) = dataset.testSet[random.Next(dataset.testSet.Count)];
-                Func<VertexPartialMatchingNode<string, double, double>, double> matchingFeatureSelector = matching => matching.UpperBound;
-                // Func<VertexPartialMatchingNode<string, double, double>, double> matchingFeatureSelector = matching => Math.Abs(matching.G.EdgeCount - matching.H.EdgeCount);
+            var edgeCostTypes = new List<(string, CostType, List<double>, List<double>)>()
+            {
+                // ("Unit cost Wojciechowski .5", CostType.UnitCost, new List<double>(){.5}, new List<double>(){.5}),
+                // ("Unit cost Wojciechowski (1.) .5", CostType.UnitCost, new List<double>(){1}, new List<double>(){.5}),
+                // ("Unit cost Wojciechowski .5 Riesen Bunke 1.", CostType.UnitCost, new List<double>(){.5, 1}, new List<double>(){1, .5}),
+                // ("Unit cost Riesen Bunke 1.", CostType.UnitCost, new List<double>(){1}, new List<double>(){1}),
 
-                var matchingParameters = GraphMatchingParameters<string, double, double>.DoubleCostComposer(
-                        CostType.UnitCost,
-                        CostType.UnitCost
-                    );
-                // matchingParameters.aCollection = new double[] { 1 };
+                ("Absolute value Wojciechowski .5", CostType.AbsoluteValue, new List<double>(){.5}, new List<double>(){.5}),
+                // ("Absolute value Wojciechowski (1.) .5", CostType.AbsoluteValue, new List<double>(){1}, new List<double>(){.5}),
+                // ("Absolute value Wojciechowski .5 Riesen Bunke 1.", CostType.AbsoluteValue, new List<double>(){.5, 1}, new List<double>(){1, .5}),
+                ("Absolute value Riesen Bunke 1.", CostType.AbsoluteValue, new List<double>(){1}, new List<double>(){1}),
 
-                // determine closest neighbours for each test and validation graph
-                var testMatchingClassPairsList = new List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>();
-                var validationMatchingClassPairsList = new List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>();
+                // ("Absolute value bounded Wojciechowski .5", CostType.AbsoluteValueBounded, new List<double>(){.5}, new List<double>(){.5}),
+                // ("Absolute value bounded Wojciechowski (1.) .5", CostType.AbsoluteValueBounded, new List<double>(){1}, new List<double>(){.5}),
+                // ("Absolute value bounded Wojciechowski .5 Riesen Bunke 1.", CostType.AbsoluteValueBounded, new List<double>(){.5, 1}, new List<double>(){1, .5}),
+                // ("Absolute value bounded Riesen Bunke 1.", CostType.AbsoluteValueBounded, new List<double>(){1}, new List<double>(){1}),
+            };
 
-                foreach (var (pair, i) in dataset.testSet.Zip(Enumerable.Range(0, int.MaxValue)))
+            var results = new Dictionary<(int vertexUpperBound, int k, string distanceScorerName, string edgeCostType, string matchingFeatureSelectorName), (double testAccuracy, double validationAccuracy)>();
+            var topResults = new Dictionary<(int vertexUpperBound, int k, string distanceScorerName, string edgeCostType, string matchingFeatureSelectorName), (double testAccuracy, double validationAccuracy)>();
+
+            for (int iteration = 0; iteration < 10; iteration++)
+            {
+                for (int vertexUpperBound = 3; vertexUpperBound < 8; vertexUpperBound++)
                 {
-                    var pairToAdd = (
-                            KNNClassifier.KNNClassifier.FindClosest(pair.Item1, dataset.trainingSet, matchingParameters, matchingFeatureSelector),
-                            pair.Item2
+                    var dataset = GenerateDataSet(
+                        context,
+                        trainingProportion: 8,
+                        validatingProportion: 1,
+                        testingProportion: 1,
+                        vertexUpperBound: vertexUpperBound,
+                        randomSeed: iteration
                         );
-                    testMatchingClassPairsList.Add(pairToAdd);
-                    System.Console.WriteLine($"Test set: computed distance: {i * 100d / dataset.testSet.Count:f2}%.");
-                }
-
-                foreach (var (pair, i) in dataset.validationSet.Zip(Enumerable.Range(0, int.MaxValue)))
-                {
-                    var pairToAdd = (
-                            KNNClassifier.KNNClassifier.FindClosest(pair.Item1, dataset.trainingSet, matchingParameters, matchingFeatureSelector),
-                            pair.Item2
-                        );
-                    validationMatchingClassPairsList.Add(pairToAdd);
-                    System.Console.WriteLine($"Validation set: computed distance: {i * 100d / dataset.validationSet.Count:f2}%.");
-                }
-
-                // TODO: provide an easy classification framework
-                Func<int, Func<int, VertexPartialMatchingNode<string, double, double>, double>, List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>, double> getAccuracy = (k, distanceScorer, matchingClassPairsList) =>
-                {
-                    var truePositives = 0;
-                    var falsePositives = 0;
-                    var trueNegatives = 0;
-                    var falseNegatives = 0;
-
-                    foreach (var (matchingClassPairs, testGraphLabel) in matchingClassPairsList)
+                    foreach (var (matchingFeatureSelectorName, matchingFeatureSelector) in matchingFeatureSelectors)
                     {
+                        foreach (var (edgeCostTypeName, edgeCostType, aCollection, bCollection) in edgeCostTypes)
+                        {
 
-                        var classificationResult = KNNClassifier.KNNClassifier.Classify<string, double, double, bool>(
-                            matchingClassPairs,
-                            distanceScorer,
-                            k: k
+                            var matchingParameters = GraphMatchingParameters<string, double, double>.DoubleCostComposer(
+                                CostType.UnitCost,
+                                edgeCostType
                             );
+                            matchingParameters.aCollection = aCollection;
+                            matchingParameters.bCollection = bCollection;
 
-                        var result = (expected: testGraphLabel, received: classificationResult.graphClass);
-                        if (result.expected)
-                        {
-                            if (result.received)
-                                truePositives += 1;
-                            else
-                                falseNegatives += 1;
-                        }
-                        else
-                        {
-                            if (result.received)
-                                falsePositives += 1;
-                            else
-                                trueNegatives += 1;
+                            // determine closest neighbours for each test and validation graph
+                            var testMatchingClassPairsList = new List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>();
+                            var validationMatchingClassPairsList = new List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>();
+
+                            foreach (var (pair, i) in dataset.testSet.Zip(Enumerable.Range(0, int.MaxValue)))
+                            {
+                                var pairToAdd = (
+                                        KNNClassifier.KNNClassifier.FindClosest(pair.Item1, dataset.trainingSet, matchingParameters, matchingFeatureSelector),
+                                        pair.Item2
+                                    );
+                                testMatchingClassPairsList.Add(pairToAdd);
+                                // System.Console.WriteLine($"Test set: computed distance: {i * 100d / dataset.testSet.Count:f2}%.");
+                            }
+
+                            foreach (var (pair, i) in dataset.validationSet.Zip(Enumerable.Range(0, int.MaxValue)))
+                            {
+                                var pairToAdd = (
+                                        KNNClassifier.KNNClassifier.FindClosest(pair.Item1, dataset.trainingSet, matchingParameters, matchingFeatureSelector),
+                                        pair.Item2
+                                    );
+                                validationMatchingClassPairsList.Add(pairToAdd);
+                                // System.Console.WriteLine($"Validation set: computed distance: {i * 100d / dataset.validationSet.Count:f2}%.");
+                            }
+
+                            Func<int, Func<int, VertexPartialMatchingNode<string, double, double>, double>, List<(List<(VertexPartialMatchingNode<string, double, double>, bool)>, bool)>, double> getAccuracy = (k, distanceScorer, matchingClassPairsList) =>
+                            {
+                                var truePositives = 0;
+                                var falsePositives = 0;
+                                var trueNegatives = 0;
+                                var falseNegatives = 0;
+
+                                foreach (var (matchingClassPairs, testGraphLabel) in matchingClassPairsList)
+                                {
+
+                                    var classificationResult = KNNClassifier.KNNClassifier.Classify<string, double, double, bool>(
+                                        matchingClassPairs,
+                                        distanceScorer,
+                                        k: k
+                                        );
+
+                                    var result = (expected: testGraphLabel, received: classificationResult.graphClass);
+                                    if (result.expected)
+                                    {
+                                        if (result.received)
+                                            truePositives += 1;
+                                        else
+                                            falseNegatives += 1;
+                                    }
+                                    else
+                                    {
+                                        if (result.received)
+                                            falsePositives += 1;
+                                        else
+                                            trueNegatives += 1;
+                                    }
+                                }
+
+                                return (truePositives + trueNegatives) * 1d / matchingClassPairsList.Count;
+                            };
+
+                            var ks = new int[]
+                            {
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6,
+                                7,
+                                8,
+                                9,
+                                10,
+                                -1
+                            };
+
+                            var distanceScorers = new (string, Func<int, VertexPartialMatchingNode<string, double, double>, double>)[]
+                            {
+                                ("Unit cost", (position, matching) => 1d),
+                                ("Position linear decay", (position, matching) => 1d / position),
+                                ("Position quadratic decay", (position, matching) => 1d / (position * position)),
+                                ("Position single exponential decay", (position, matching) => Math.Exp(-position)),
+                                ("Position double exponential decay", (position, matching) => Math.Exp(-position * position)),
+                                ("Double exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound * matching.LowerBound)),
+                                ("Single exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound)),
+                                ("Double exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound * matching.UpperBound)),
+                                ("Single exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound)),
+                                ("Quadratic lower bound", (position, matching) => -matching.LowerBound * matching.LowerBound),
+                                ("Quadratic upper bound", (position, matching) => -matching.UpperBound * matching.UpperBound),
+                                ("Lower bound", (position, matching) => -matching.LowerBound),
+                                ("Upper bound", (position, matching) => -matching.UpperBound),
+                            };
+
+
+                            foreach (var k in ks)
+                            {
+                                foreach (var (distanceScorerName, distanceScorer) in distanceScorers)
+                                {
+                                    var testAccuracy = getAccuracy(k > 0 ? k : dataset.testSet.Count, distanceScorer, testMatchingClassPairsList);
+                                    var validationAccuracy = getAccuracy(k > 0 ? k : dataset.validationSet.Count, distanceScorer, validationMatchingClassPairsList);
+                                    var key = (vertexUpperBound, k, distanceScorerName, edgeCostTypeName, matchingFeatureSelectorName);
+                                    if (iteration >= 1)
+                                    {
+                                        var newTestAccuracy = (results[key].testAccuracy * iteration + testAccuracy) / (iteration + 1);
+                                        var newValidationAccuracy = (results[key].validationAccuracy * iteration + validationAccuracy) / (iteration + 1);
+                                        results[key] = (newTestAccuracy, newValidationAccuracy);
+                                    }
+                                    else
+                                        results.Add(key, (testAccuracy, validationAccuracy));
+                                }
+                            }
+
+
+                            // entire summary
+                            var winningSummary = String.Empty;
+                            // var topResult = results.OrderByDescending(kvp => kvp.Value.testAccuracy).First();
+                            // topResults.Add(topResult.Key, topResult.Value);
+
+                            // using var file = new System.IO.StreamWriter(resultsFilePath, true);
+                            foreach (var kvp in results.OrderBy(kvp => kvp.Value.testAccuracy).TakeLast(10))
+                            {
+                                var summary = $"Graph vertices: {vertexUpperBound}. Iteration: {iteration}. Test accuracy: {kvp.Value.testAccuracy * 100d:f3}%. Validation accuracy: {kvp.Value.validationAccuracy * 100d:f3}%. k: {kvp.Key.k}. scoring function: {kvp.Key.distanceScorerName}. Feature selector: {matchingFeatureSelectorName}. Edge cost type: {edgeCostTypeName}.";
+
+                                winningSummary = summary;
+
+                                // System.Console.WriteLine(summary);
+
+                                // file.WriteLine(summary);
+                            }
+                            // file.WriteLine();
+
+                            // top summary
+                            using var topResultsFile = new System.IO.StreamWriter(topResultsFilePath, true);
+                            topResultsFile.WriteLine(winningSummary);
+
+                            using var topTopResultsFile = new System.IO.StreamWriter(topTopResultsFilePath);
+
+                            foreach (var (kvp, i) in results.OrderByDescending(result => result.Value.testAccuracy).Take(5).Zip(Enumerable.Range(1, int.MaxValue)))
+                            {
+                                var summary = $"Graph vertices: {vertexUpperBound}. Iteration: {iteration}. Test accuracy: {kvp.Value.testAccuracy * 100d:f3}%. Validation accuracy: {kvp.Value.validationAccuracy * 100d:f3}%. k: {kvp.Key.k}. scoring function: {kvp.Key.distanceScorerName}. Feature selector: {matchingFeatureSelectorName}. Edge cost type: {edgeCostTypeName}.";
+
+                                topTopResultsFile.WriteLine($"Top {i}: {summary}");
+                            }
                         }
                     }
-
-                    return (truePositives + trueNegatives) * 1d / matchingClassPairsList.Count;
-                };
-
-                var ks = new int[]
-                {
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                -1
-                };
-
-                var distanceScorers = new (string, Func<int, VertexPartialMatchingNode<string, double, double>, double>)[]
-                {
-                ("Unit cost", (position, matching) => 1d),
-                ("Double exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound * matching.LowerBound)),
-                ("Single exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound)),
-                ("Double exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound * matching.UpperBound)),
-                ("Single exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound)),
-                ("Quadratic lower bound", (position, matching) => -matching.LowerBound * matching.LowerBound),
-                ("Quadratic upper bound", (position, matching) => -matching.UpperBound * matching.UpperBound),
-                ("Lower bound", (position, matching) => -matching.LowerBound),
-                ("Upper bound", (position, matching) => -matching.UpperBound),
-                };
-
-
-                foreach (var k in ks)
-                {
-                    foreach (var (distanceScorerName, distanceScorer) in distanceScorers)
-                    {
-                        var testAccuracy = getAccuracy(k > 0 ? k : dataset.testSet.Count, distanceScorer, testMatchingClassPairsList);
-                        var validationAccuracy = getAccuracy(k > 0 ? k : dataset.validationSet.Count, distanceScorer, validationMatchingClassPairsList);
-                        var key = (k, distanceScorerName);
-                        if (iteration >= 1)
-                        {
-                            var newTestAccuracy = (results[key].testAccuracy * iteration + testAccuracy) / (iteration + 1);
-                            var newValidationAccuracy = (results[key].validationAccuracy * iteration + validationAccuracy) / (iteration + 1);
-                            results[key] = (newTestAccuracy, newValidationAccuracy);
-                        }
-                        else
-                            results.Add(key, (testAccuracy, validationAccuracy));
-                    }
                 }
-
-                foreach (var kvp in results.OrderBy(kvp => -kvp.Value.testAccuracy).Take(10).Reverse())
-                {
-                    System.Console.WriteLine($"Test accuracy: {kvp.Value.testAccuracy * 100d:f3}%. Validation accuracy: {kvp.Value.validationAccuracy * 100d:f3}%. k: {kvp.Key.k}. distanceScorer: {kvp.Key.distanceScorerName}");
-                }
-
-                System.Console.WriteLine($"Done with iteration {iteration}");
             }
             // DATA ANALYSIS
 
