@@ -22,50 +22,13 @@ namespace Experimental
                 return random.NextDouble();
             };
 
-            double vertexBound = 2;
-            double edgeBound = 3;
-            double vertexDecay = 1;
-            double edgeDecay = 1;
-
-            Func<double, double, double, double> boundMetric = (a, bound, decay) => bound * a / (1 / decay + a);
-
-            Func<double, double, double> vertexRelabel = (a1, a2) =>
-            {
-                return boundMetric(Math.Abs(a1 - a2), vertexBound, vertexDecay);
-            };
-            Func<double, double> vertexAdd = a => boundMetric(Math.Abs(a), vertexBound, vertexDecay);
-            Func<double, double> vertexRemove = vertexAdd;
-
-            Func<double, double, double> edgeRelabel = (a1, a2) =>
-            {
-                return boundMetric(Math.Abs(a1 - a2), edgeBound, edgeDecay);
-            };
-            Func<double, double> edgeAdd = a => boundMetric(Math.Abs(a), edgeBound, edgeDecay);
-            Func<double, double> edgeRemove = edgeAdd;
-
-
-
-            // Func<double, double, double> vertexRelabel = (a1, a2) =>
-            // {
-            //     return Math.Abs(a1 - a2);
-            // };
-            // Func<double, double> vertexAdd = a => Math.Abs(a);
-            // Func<double, double> vertexRemove = vertexAdd;
-
-            // Func<double, double, double> edgeRelabel = (a1, a2) =>
-            // {
-            //     return Math.Abs(a1 - a2);
-            // };
-            // Func<double, double> edgeAdd = a => Math.Abs(a);
-            // Func<double, double> edgeRemove = edgeAdd;
-
             var a = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
             var b = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
             var RiesenBunke2009AB = (1, 1);
 
 
 
-            for (int gVertices = 8; gVertices < 12; gVertices++)
+            for (int gVertices = 30; gVertices < 100; gVertices++)
             {
                 var hVertices = gVertices;
                 // for (int hVertices = gVertices; hVertices > 0; hVertices-=1)
@@ -75,9 +38,10 @@ namespace Experimental
                     foreach (var aElement in a)
                         foreach (var bElement in b)
                             results.Add((aElement, bElement), 0);
-                    for (double gDensity = 1.0; gDensity > 0; gDensity -= 0.1)
+                    for (double gDensity = 1.0; gDensity > 0; gDensity -= 0.01)
                     {
-                        for (double hDensity = gDensity; hDensity > 0; hDensity -= 0.1)
+                        var hDensity = gDensity;
+                        // for (double hDensity = gDensity; hDensity > 0; hDensity -= 0.01)
                         {
                             for (int iter = 0; iter < 5; iter++)
                             {
@@ -96,27 +60,38 @@ namespace Experimental
                                     edgeAttributeGenerator: edgeAttributeGenerator
                                     );
 
-                                var matchingParameters = new GraphMatchingParameters<int, double, double>
-                                {
-                                    aCollection = a,
-                                    bCollection = b,
-                                    edgeAdd = edgeAdd,
-                                    vertexAdd = vertexAdd,
-                                    edgeRelabel = edgeRelabel,
-                                    edgeRemove = edgeRemove,
-                                    vertexRemove = vertexRemove,
-                                    vertexRelabel = vertexRelabel,
-                                    encodingMethod = GraphEncodingMethod.Wojciechowski
-                                };
-                                var matching = new VertexPartialMatchingNode<int, double, double>(
+                                var matchingParameters11 = GraphMatchingParameters<int, double, double>.DoubleCostComposer(CostType.AbsoluteValue, CostType.AbsoluteValue);
+                                matchingParameters11.aCollection = new double[] { 1 };
+                                matchingParameters11.bCollection = new double[] { 1 };
+                                var matching11 = new VertexPartialMatchingNode<int, double, double>(
                                     G,
                                     H,
-                                    matchingParameters
+                                    matchingParameters11
+                                );
+                                
+                                var matchingParameters0505 = GraphMatchingParameters<int, double, double>.DoubleCostComposer(CostType.AbsoluteValue, CostType.AbsoluteValue);
+                                matchingParameters0505.aCollection = new double[] { .5 };
+                                matchingParameters0505.bCollection = new double[] { .5 };
+                                var matching0505 = new VertexPartialMatchingNode<int, double, double>(
+                                    G,
+                                    H,
+                                    matchingParameters0505
                                 );
 
-                                var myRelativeError = (matching.UpperBound - matching.LowerBound) / matching.LowerBound;
-                                var theirRelativeError = (matching.UpperBound - matching.abLowerBounds[RiesenBunke2009AB]) / matching.abLowerBounds[RiesenBunke2009AB];
-                                var eps = 1e-12;
+                                var prop = matching0505.LowerBound / matching11.LowerBound;
+
+                                System.Console.WriteLine($"Vertices: {gVertices}, density: {gDensity:f2}. Mine / theirs: {prop:f4}");
+
+                                if (double.IsNormal(prop) && prop >= 0 && prop < 1000000)
+                                {
+                                    measurements += 1;
+                                    results[(.5, .5)] = results[(.5, .5)] + (prop - results[(.5, .5)]) / measurements;
+                                    System.Console.WriteLine($"Average: {results[(.5, .5)]}");
+                                }
+
+                                // var myRelativeError = (matching.UpperBound - matching.LowerBound) / matching.LowerBound;
+                                // var theirRelativeError = (matching.UpperBound - matching.abLowerBounds[RiesenBunke2009AB]) / matching.abLowerBounds[RiesenBunke2009AB];
+                                // var eps = 1e-12;
                                 // if (theirRelativeError > eps)
                                 // {
                                 //     System.Console.WriteLine($"|Vg|={gVertices}, |Eg|={gDensity:f2}, |Vh|={hVertices}, |Eh|={hDensity:f2}. My estimate / theirs {matching.LowerBound / matching.abLowerBounds[RiesenBunke2009AB]:f2}.");
@@ -125,36 +100,36 @@ namespace Experimental
 
                                 // var theirLowerBound = matching.abLowerBounds[(2d/3, .5)];
                                 // if (theirLowerBound > eps)
-                                {
-                                    measurements += 1;
-                                    foreach (var kvp in matching.abLowerBounds)
-                                    {
-                                        // var score = (matching.UpperBound - kvp.Value) / matching.UpperBound;
-                                        var score = kvp.Value > Math.Max(Math.Max(
-                                            matching.abLowerBounds[(.5, .5)],
-                                            matching.abLowerBounds[(1d / 3, .5)]),
-                                            matching.abLowerBounds[(2d / 3, .5)]
-                                            ) ? 1 : 0;
-                                        // if (!double.IsNaN(score))
-                                        results[kvp.Key] += score;
-                                    }
-                                }
+                                // {
+                                //     measurements += 1;
+                                //     foreach (var kvp in matching.abLowerBounds)
+                                //     {
+                                //         // var score = (matching.UpperBound - kvp.Value) / matching.UpperBound;
+                                //         var score = kvp.Value > Math.Max(Math.Max(
+                                //             matching.abLowerBounds[(.5, .5)],
+                                //             matching.abLowerBounds[(1d / 3, .5)]),
+                                //             matching.abLowerBounds[(2d / 3, .5)]
+                                //             ) ? 1 : 0;
+                                //         // if (!double.IsNaN(score))
+                                //         results[kvp.Key] += score;
+                                //     }
+                                // }
 
                             }
                         }
                     }
 
-                    var resultsNames = results.Keys.ToArray();
-                    var resultsScores = resultsNames.Select(key => -results[key]).ToArray();
-                    Array.Sort(resultsScores, resultsNames);
-                    System.Console.WriteLine(gVertices);
-                    System.Console.Write($"(1, 1):{results[(1, 1)] / measurements:f2}  ");
-                    for (int i = 0; i < 6; i++)
-                    {
-                        var (aa, bb) = resultsNames[i];
-                        System.Console.Write($"({aa:f2}, {bb:f2}):{-resultsScores[i] / measurements:f2}  ");
-                    }
-                    System.Console.WriteLine();
+                    // var resultsNames = results.Keys.ToArray();
+                    // var resultsScores = resultsNames.Select(key => -results[key]).ToArray();
+                    // Array.Sort(resultsScores, resultsNames);
+                    // System.Console.WriteLine(gVertices);
+                    // System.Console.Write($"(1, 1):{results[(1, 1)] / measurements:f2}  ");
+                    // for (int i = 0; i < 6; i++)
+                    // {
+                    //     var (aa, bb) = resultsNames[i];
+                    //     System.Console.Write($"({aa:f2}, {bb:f2}):{-resultsScores[i] / measurements:f2}  ");
+                    // }
+                    // System.Console.WriteLine();
                 }
             }
 
