@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using KNNClassifier;
 using AttributedGraph;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Experimental
 {
@@ -24,11 +26,12 @@ namespace Experimental
 
             var a = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
             var b = new List<double>() { 0, 1, .5, 1d / 3, 2d / 3, -1, 2, 10, -10, 100, -100, 1000, -1000 };
-            var RiesenBunke2009AB = (1, 1);
+            // var RiesenBunke2009AB = (1, 1);
+            var locker = new object();
 
 
 
-            for (int gVertices = 30; gVertices < 100; gVertices++)
+            for (int gVertices = 70; gVertices < 100; gVertices++)
             {
                 var hVertices = gVertices;
                 // for (int hVertices = gVertices; hVertices > 0; hVertices-=1)
@@ -38,11 +41,12 @@ namespace Experimental
                     foreach (var aElement in a)
                         foreach (var bElement in b)
                             results.Add((aElement, bElement), 0);
-                    for (double gDensity = 1.0; gDensity > 0; gDensity -= 0.01)
+                    for (double gDensity = 1.00; gDensity > 0; gDensity -= 0.01)
                     {
                         var hDensity = gDensity;
                         // for (double hDensity = gDensity; hDensity > 0; hDensity -= 0.01)
                         {
+                            // Parallel.For(0, 4, iter =>
                             for (int iter = 0; iter < 5; iter++)
                             {
                                 var G = RandomGraphFactory.generateRandomInstance(
@@ -50,44 +54,56 @@ namespace Experimental
                                     density: gDensity,
                                     directed: true,
                                     vertexAttributeGenerator: vertexAttributeGenerator,
-                                    edgeAttributeGenerator: edgeAttributeGenerator
+                                    edgeAttributeGenerator: edgeAttributeGenerator,
+                                    random = new Random((int)(gDensity * 10000) ^ iter)
                                     );
                                 var H = RandomGraphFactory.generateRandomInstance(
                                     vertices: hVertices,
                                     density: hDensity,
                                     directed: true,
                                     vertexAttributeGenerator: vertexAttributeGenerator,
-                                    edgeAttributeGenerator: edgeAttributeGenerator
+                                    edgeAttributeGenerator: edgeAttributeGenerator,
+                                    random = new Random(((int)(hDensity * 10000) - 100000) ^ iter)
                                     );
 
                                 var matchingParameters11 = GraphMatchingParameters<int, double, double>.DoubleCostComposer(CostType.AbsoluteValue, CostType.AbsoluteValue);
                                 matchingParameters11.aCollection = new double[] { 1 };
                                 matchingParameters11.bCollection = new double[] { 1 };
-                                var matching11 = new VertexPartialMatchingNode<int, double, double>(
+                                var sw = new Stopwatch();
+                                sw.Start();
+                                var matching11 = new VertexPartialMatchingParallelNode<int, double, double>(
                                     G,
                                     H,
                                     matchingParameters11
                                 );
-                                
+                                sw.Stop();
+
                                 var matchingParameters0505 = GraphMatchingParameters<int, double, double>.DoubleCostComposer(CostType.AbsoluteValue, CostType.AbsoluteValue);
                                 matchingParameters0505.aCollection = new double[] { .5 };
                                 matchingParameters0505.bCollection = new double[] { .5 };
-                                var matching0505 = new VertexPartialMatchingNode<int, double, double>(
+                                sw.Start();
+                                var matching0505 = new VertexPartialMatchingParallelNode<int, double, double>(
                                     G,
                                     H,
                                     matchingParameters0505
                                 );
+                                sw.Stop();
 
                                 var prop = matching0505.LowerBound / matching11.LowerBound;
 
-                                System.Console.WriteLine($"Vertices: {gVertices}, density: {gDensity:f2}. Mine / theirs: {prop:f4}");
+                                System.Console.Write($"Vertices: {gVertices}, density: {gDensity:f2}. Mine / theirs: {prop:f3}. Time: {sw.Elapsed.TotalMilliseconds / 1000:f3}s.");
 
                                 if (double.IsNormal(prop) && prop >= 0 && prop < 1000000)
                                 {
-                                    measurements += 1;
-                                    results[(.5, .5)] = results[(.5, .5)] + (prop - results[(.5, .5)]) / measurements;
-                                    System.Console.WriteLine($"Average: {results[(.5, .5)]}");
+                                    lock (locker)
+                                    {
+                                        measurements += 1;
+                                        results[(.5, .5)] = results[(.5, .5)] + (prop - results[(.5, .5)]) / measurements;
+                                        System.Console.Write($" Average: {results[(.5, .5)]:f3}");
+                                    }
                                 }
+
+                                System.Console.WriteLine();
 
                                 // var myRelativeError = (matching.UpperBound - matching.LowerBound) / matching.LowerBound;
                                 // var theirRelativeError = (matching.UpperBound - matching.abLowerBounds[RiesenBunke2009AB]) / matching.abLowerBounds[RiesenBunke2009AB];
