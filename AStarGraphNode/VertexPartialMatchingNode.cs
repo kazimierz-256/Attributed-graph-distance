@@ -1,4 +1,5 @@
-﻿using AStar;
+﻿#define cache_
+using AStar;
 using AttributedGraph;
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,7 @@ namespace AStarGraphNode
             this.G = G;
             this.H = H;
             this.preassignedVertices = matchingParameters.preassignedVertices;
-
+#if cache
             var cachedVertexAddingCosts = new Dictionary<VA, double>();
             var cachedVertexRemovingCosts = new Dictionary<VA, double>();
             var cachedVertexRelabellingCosts = new Dictionary<(VA, VA), double>();
@@ -103,6 +104,16 @@ namespace AStarGraphNode
                     cachedEdgeRelabellingCosts.Add(key, matchingParameters.edgeRelabel(a1, a2));
                 return cachedEdgeRelabellingCosts[key];
             };
+#else
+            
+            Func<VA, double> vertexAdd = a => matchingParameters.vertexAdd(a);
+            Func<VA, double> vertexRemove = a => matchingParameters.vertexRemove(a);
+            Func<VA, VA, double> vertexRelabel = (a1, a2) => matchingParameters.vertexRelabel(a1, a2);
+
+            Func<EA, double> edgeAdd = a => matchingParameters.edgeAdd(a);
+            Func<EA, double> edgeRemove = a => matchingParameters.edgeRemove(a);
+            Func<EA, EA, double> edgeRelabel = (a1, a2) => matchingParameters.edgeRelabel(a1, a2);
+#endif
 
             // Matching part
             // TODO: compute the lower bound using LAP taking constraints into account
