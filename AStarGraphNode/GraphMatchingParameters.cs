@@ -71,13 +71,13 @@ namespace AStarGraphNode
                 case CostType.AbsoluteValueBounded:
                     parameters.vertexAdd = a => bound(
                         Math.Abs(a),
-                        (double)getParameterDefault(vertexParameters, 0, 1),
-                        (double)getParameterDefault(vertexParameters, 1, 1)
+                        getParameterDefault(vertexParameters, 0, 1),
+                        getParameterDefault(vertexParameters, 1, 1)
                         );
                     parameters.vertexRemove = a => bound(
                         Math.Abs(a),
-                        (double)getParameterDefault(vertexParameters, 0, 1),
-                        (double)getParameterDefault(vertexParameters, 1, 1)
+                        getParameterDefault(vertexParameters, 0, 1),
+                        getParameterDefault(vertexParameters, 1, 1)
                         );
                     parameters.vertexRelabel = (a1, a2) => bound(
                         Math.Abs(a1 - a2),
