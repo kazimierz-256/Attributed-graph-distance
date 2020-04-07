@@ -19,11 +19,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Postgres_enron_database", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Postgres_enron_database_tests", "Postgres_enron_database_tests\Postgres_enron_database_tests.csproj", "{48BD1A13-3B59-4743-8969-7CD0CBE87D1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Experimental", "Experimental\Experimental.csproj", "{D4675247-AFBD-40C5-B1EC-AE7FB16C134D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Experimental", "Experimental\Experimental.csproj", "{D4675247-AFBD-40C5-B1EC-AE7FB16C134D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AStarGraphNodeTests", "AStarGraphNodeTests\AStarGraphNodeTests.csproj", "{4C4C5DB4-D68B-4A2A-B969-70EDE412DFE5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AStarGraphNodeTests", "AStarGraphNodeTests\AStarGraphNodeTests.csproj", "{4C4C5DB4-D68B-4A2A-B969-70EDE412DFE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KNNClassifierExperimental", "KNNClassifierExperimental\KNNClassifierExperimental.csproj", "{14E7BC96-7888-4F65-97FE-54AFF014D867}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KNNClassifierExperimental", "KNNClassifierExperimental\KNNClassifierExperimental.csproj", "{14E7BC96-7888-4F65-97FE-54AFF014D867}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AttributedGraphTests", "GraphEncodingTests\AttributedGraphTests.csproj", "{F59E546A-5DF4-435B-A3C6-8BB74710F26B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{14E7BC96-7888-4F65-97FE-54AFF014D867}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14E7BC96-7888-4F65-97FE-54AFF014D867}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14E7BC96-7888-4F65-97FE-54AFF014D867}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F59E546A-5DF4-435B-A3C6-8BB74710F26B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F59E546A-5DF4-435B-A3C6-8BB74710F26B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F59E546A-5DF4-435B-A3C6-8BB74710F26B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F59E546A-5DF4-435B-A3C6-8BB74710F26B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
