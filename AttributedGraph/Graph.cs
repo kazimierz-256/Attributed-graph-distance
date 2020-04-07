@@ -9,11 +9,10 @@ namespace AttributedGraph
         public readonly Dictionary<V, HashSet<V>> OutgoingEdges = new Dictionary<V, HashSet<V>>();
         public readonly Dictionary<V, HashSet<V>> IncomingEdges = new Dictionary<V, HashSet<V>>();
         public readonly Dictionary<(V, V), EA> Edges = new Dictionary<(V, V), EA>();
-        private readonly bool directed;
 
         public Graph(bool directed)
         {
-            this.directed = directed;
+            Directed = directed;
         }
         public void AddEdge((V, V) edge, EA edgeAttribute)
         {
@@ -24,12 +23,15 @@ namespace AttributedGraph
                 throw new Exception("Tried to add an edge but no such adjacent vertex exist");
 
             Edges.Add(edge, edgeAttribute);
-            OutgoingEdges[edge.Item1].Add(edge.Item2);
-            if (!directed && !edge.Item1.Equals(edge.Item2))
+            var (u, v) = edge;
+            OutgoingEdges[u].Add(v);
+            IncomingEdges[v].Add(u);
+            if (!Directed)
             {
-                var (u, v) = edge;
-                Edges.Add((v, u), edgeAttribute);
-                IncomingEdges[edge.Item2].Add(edge.Item1);
+                if (!edge.Item1.Equals(edge.Item2))
+                    Edges.Add((v, u), edgeAttribute);
+                OutgoingEdges[v].Add(u);
+                IncomingEdges[u].Add(v);
             }
         }
         public void RemoveEdge((V, V) edge)
@@ -39,7 +41,7 @@ namespace AttributedGraph
 
             Edges.Remove(edge);
             OutgoingEdges[edge.Item1].Remove(edge.Item2);
-            if (!directed && !edge.Item1.Equals(edge.Item2))
+            if (!Directed && !edge.Item1.Equals(edge.Item2))
             {
                 var (u, v) = edge;
                 Edges.Remove((v, u));
@@ -73,6 +75,7 @@ namespace AttributedGraph
                 Edges.Remove((vertex, neighbour));
             foreach (var neighbour in IncomingEdges[vertex])
                 Edges.Remove((neighbour, vertex));
+
             OutgoingEdges.Remove(vertex);
             IncomingEdges.Remove(vertex);
             Vertices.Remove(vertex);
@@ -83,7 +86,7 @@ namespace AttributedGraph
         public int VertexCount => Vertices.Count;
         public int EdgeCount => Edges.Count;
 
-        public bool Directed => directed;
+        public bool Directed { get; }
         public VA this[V vertex]
         {
             get { return Vertices[vertex]; }
@@ -114,7 +117,7 @@ namespace AttributedGraph
                 else
                 {
                     Edges[edge] = value;
-                    if (!directed && !u.Equals(v))
+                    if (!Directed && !u.Equals(v))
                         Edges[(v, u)] = value;
                 }
             }
