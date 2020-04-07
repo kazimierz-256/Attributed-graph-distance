@@ -91,15 +91,11 @@ namespace AStarGraphNodeTests
         public void AugmentationTests()
         {
             var random = new Random(3_14159265);
-            Func<double> vertexAttributeGenerator = () =>
-            {
-                return random.NextDouble();
-            };
-            Func<double> edgeAttributeGenerator = () =>
-            {
-                return random.NextDouble();
-            };
-            Func<(int, double)> vertexGenerator = () => (random.Next(), 0d);
+            double vertexAttributeGenerator() => random.NextDouble();
+            
+            double edgeAttributeGenerator() => random.NextDouble();
+
+            (int, double) vertexGenerator() => (random.Next(), 0d);
 
             var G = RandomGraphFactory.generateRandomInstance(
                 vertices: 7,
@@ -139,7 +135,7 @@ namespace AStarGraphNodeTests
                     vertexRelabel = vertexRelabel,
                     encodingMethod = encoding
                 };
-                var matching1 = AugmentationMatches<int, double, double>(
+                var matching1 = AugmentationMatches(
                     Math.Max(G.VertexCount, H.VertexCount),
                     random,
                     vertexGenerator,
@@ -147,7 +143,7 @@ namespace AStarGraphNodeTests
                     H,
                     matchingParameters
                     );
-                var matching2 = AugmentationMatches<int, double, double>(
+                var matching2 = AugmentationMatches(
                     H.VertexCount + G.VertexCount,
                     random,
                     vertexGenerator,
@@ -163,14 +159,8 @@ namespace AStarGraphNodeTests
         public void CompletingEquivalence()
         {
             var random = new Random(3_14159265);
-            Func<double> vertexAttributeGenerator = () =>
-            {
-                return random.NextDouble();
-            };
-            Func<double> edgeAttributeGenerator = () =>
-            {
-                return random.NextDouble();
-            };
+            double vertexAttributeGenerator() => random.NextDouble();
+            double edgeAttributeGenerator() => random.NextDouble();
 
             var G = RandomGraphFactory.generateRandomInstance(
                 vertices: 7,
@@ -193,7 +183,7 @@ namespace AStarGraphNodeTests
             var a = new List<double>() { 1 };
             var b = new List<double>() { .5 };
 
-            Func<(int, double)> vertexGenerator = () => (random.Next(), 0d);
+            (int, double) vertexGenerator() => (random.Next(), 0d);
             var matchingParameters = new GraphMatchingParameters<int, double, double>
             {
                 aCollection = new List<double>() { 1 },
@@ -205,7 +195,7 @@ namespace AStarGraphNodeTests
                 vertexRemove = vertexRemove,
                 vertexRelabel = vertexRelabel
             };
-            EncodingsMatch<int, double, double>(
+            EncodingsMatch(
                 G,
                 H,
                 vertexGenerator,
