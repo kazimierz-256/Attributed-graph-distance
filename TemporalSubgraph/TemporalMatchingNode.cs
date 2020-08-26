@@ -18,6 +18,8 @@ namespace TemporalSubgraph
         private HashSet<V> U2 = new HashSet<V>();
         // unmatched nodes U2
 
+
+
         public TemporalMatchingNode(Graph<V, VA, EA> graph1, Graph<V, VA, EA> graph2)
         {
             this.graph1 = graph1;
@@ -47,6 +49,11 @@ namespace TemporalSubgraph
         }
 
         public double DistanceFromSource()
+        {
+            throw new NotImplementedException();
+        }
+
+        public V Matching(V vertex1)
         {
             throw new NotImplementedException();
         }

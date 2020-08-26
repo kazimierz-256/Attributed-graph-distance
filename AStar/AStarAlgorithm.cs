@@ -3,14 +3,16 @@ using System.Collections.Generic;
 
 namespace AStar
 {
-    public class AStarAlgorithm
+    public class AStarAlgorithm<T> where T : INode
+
     {
-        public SortedSet<INode> Queue { get; } = new SortedSet<INode>(new AStarComparer<INode>());
-        public AStarAlgorithm(INode initialNode) : this(new[] { initialNode })
+        public SortedSet<T> Queue { get; } = new SortedSet<T>(new AStarComparer<T>());
+
+        public AStarAlgorithm(T initialNode) : this(new[] { initialNode })
         {
         }
 
-        public AStarAlgorithm(ICollection<INode> initialNodes)
+        public AStarAlgorithm(ICollection<T> initialNodes)
         {
             if (initialNodes.Count == 0)
                 throw new Exception("No nodes to expand for the A Star algorithm.");
@@ -19,7 +21,7 @@ namespace AStar
                 Queue.Add(node);
         }
 
-        public INode BestNode => Queue.Min;
+        public T BestNode => Queue.Min;
 
         /// <summary>
         /// Expands the best node, removes it, and inserts its descendants into the queue.
@@ -31,7 +33,7 @@ namespace AStar
             var expandedNodes = bestNode.Expand();
             Queue.Remove(bestNode);
             foreach (var node in expandedNodes)
-                Queue.Add(node);
+                Queue.Add((T)node);
 
             return expandedNodes.Count > 0;
         }

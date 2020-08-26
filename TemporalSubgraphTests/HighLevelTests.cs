@@ -36,16 +36,18 @@ namespace TemporalSubgraphTests
             graph2.AddEdge(("3", "1"), 3);
 
             var initialNode = new TemporalMatchingNode<string, int, int>(graph1, graph2);
-            var algorithm = new AStarAlgorithm(initialNode);
+            var algorithm = new AStarAlgorithm<TemporalMatchingNode<string, int, int>>(initialNode);
 
             // Act
             var expanded = true;
             while (expanded)
                 expanded = algorithm.ExpandBestNode();
-            var temporalMatching = algorithm.BestNode;
+            var temporalMatching = algorithm.BestNode as TemporalMatchingNode<string, int, int>;
 
             // Assert
-            Assert.Equal(temporalMatching.)
+            Assert.Equal("1", temporalMatching.Matching("B"));
+            Assert.Equal("2", temporalMatching.Matching("C"));
+            Assert.Equal("3", temporalMatching.Matching("E"));
         }
     }
 }

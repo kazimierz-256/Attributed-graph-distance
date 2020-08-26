@@ -2,8 +2,8 @@
 
 namespace AStar
 {
-    public class AStarComparer<T> : IComparer<INode>
+    public class AStarComparer<T> : IComparer<T> where T : INode
     {
-        public int Compare(INode x, INode y) => (x.DistanceFromSource() + x.GetHeuristicValue()).CompareTo(y.DistanceFromSource() + y.GetHeuristicValue());
+        public int Compare(T x, T y) => (x.DistanceFromSource() + x.GetHeuristicValue()).CompareTo(y.DistanceFromSource() + y.GetHeuristicValue());
     }
 }

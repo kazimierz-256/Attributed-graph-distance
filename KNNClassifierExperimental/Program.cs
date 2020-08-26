@@ -22,8 +22,8 @@ namespace KNNClassifierExperimental
 
             var matchingFeatureSelectors = new List<(string, Func<VertexPartialMatchingNode<string, double, double>, double>)>()
             {
-                ("Upper bound", matching => matching.UpperBound),
-                ("Lower bound", matching => matching.LowerBound)
+                ("Upper bound", matching => matching.BestUpperBound),
+                ("Lower bound", matching => matching.BestLowerBound)
             };
 
             var edgeCostTypes = new List<(string, CostType, List<double>, List<double>)>()
@@ -153,14 +153,14 @@ namespace KNNClassifierExperimental
                                 ("Position quadratic decay", (position, matching) => 1d / (position * position)),
                                 ("Position single exponential decay", (position, matching) => Math.Exp(-position)),
                                 ("Position double exponential decay", (position, matching) => Math.Exp(-position * position)),
-                                ("Double exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound * matching.LowerBound)),
-                                ("Single exponential lower bound", (position, matching) => Math.Exp(-matching.LowerBound)),
-                                ("Double exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound * matching.UpperBound)),
-                                ("Single exponential upper bound", (position, matching) => Math.Exp(-matching.UpperBound)),
-                                ("Quadratic lower bound", (position, matching) => -matching.LowerBound * matching.LowerBound),
-                                ("Quadratic upper bound", (position, matching) => -matching.UpperBound * matching.UpperBound),
-                                ("Lower bound", (position, matching) => -matching.LowerBound),
-                                ("Upper bound", (position, matching) => -matching.UpperBound),
+                                ("Double exponential lower bound", (position, matching) => Math.Exp(-matching.BestLowerBound * matching.BestLowerBound)),
+                                ("Single exponential lower bound", (position, matching) => Math.Exp(-matching.BestLowerBound)),
+                                ("Double exponential upper bound", (position, matching) => Math.Exp(-matching.BestUpperBound * matching.BestUpperBound)),
+                                ("Single exponential upper bound", (position, matching) => Math.Exp(-matching.BestUpperBound)),
+                                ("Quadratic lower bound", (position, matching) => -matching.BestLowerBound * matching.BestLowerBound),
+                                ("Quadratic upper bound", (position, matching) => -matching.BestUpperBound * matching.BestUpperBound),
+                                ("Lower bound", (position, matching) => -matching.BestLowerBound),
+                                ("Upper bound", (position, matching) => -matching.BestUpperBound),
                             };
 
 
