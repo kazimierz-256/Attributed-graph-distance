@@ -8,8 +8,9 @@ namespace AStar
     {
         public SortedSet<T> Queue { get; } = new SortedSet<T>(new AStarComparer<T>());
 
-        public AStarAlgorithm(T initialNode) : this(new[] { initialNode })
+        public AStarAlgorithm(T initialNode)
         {
+            Queue.Add(initialNode);
         }
 
         public AStarAlgorithm(ICollection<T> initialNodes)
@@ -31,7 +32,7 @@ namespace AStar
         {
             var bestNode = BestNode;
             var expandedNodes = bestNode.Expand();
-            Queue.Remove(bestNode);
+
             foreach (var node in expandedNodes)
                 Queue.Add((T)node);
 
