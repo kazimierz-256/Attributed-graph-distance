@@ -12,7 +12,6 @@ namespace TemporalSubgraphTests
         public void ExampleFromArxiv()
         {
             // Arrange
-
             // Graph from first page of https://arxiv.org/pdf/1801.08098.pdf
             var graph1 = new Graph<string, int, int>(directed: true);
             foreach (var vertex in new[] { "A", "B", "C", "D", "E", "F" })
@@ -39,10 +38,16 @@ namespace TemporalSubgraphTests
             var algorithm = new AStarAlgorithm<TemporalMatchingNode<string, int, int>>(initialNode);
 
             // Act
-            var expanded = true;
-            while (expanded)
-                expanded = algorithm.ExpandBestNode();
-            var temporalMatching = algorithm.BestNode as TemporalMatchingNode<string, int, int>;
+            while (true)
+            {
+                var bestNode = algorithm.BestNode;
+                var expandedNode = algorithm.ExpandBestNode();
+                if (expandedNode)
+                    algorithm.Queue.Remove(bestNode);
+                else
+                    break;
+            }
+            var temporalMatching = algorithm.BestNode;
 
             // Assert
             Assert.Equal("1", temporalMatching.Matching("B"));
