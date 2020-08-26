@@ -13,38 +13,31 @@ namespace AStarGraphNode
         public readonly Graph<V, VA, EA> H;
         private readonly List<(V, V)> preassignedVertices;
 
-        public int CompareTo(object obj)
-        {
-            var node = (INode)obj;
-            if (node == null)
-                throw new Exception("Incompatible node type");
-            return this.LowerBound.CompareTo(node.LowerBound);
-        }
         List<INode> INode.Expand()
         {
             // expand along some unassigned vertex
             throw new NotImplementedException();
         }
 
+        public double GetHeuristicValue() => BestLowerBound;
+
+        public double DistanceFromSource()
+        {
+            throw new NotImplementedException();
+        }
+
         public Dictionary<(double, double), double> abLowerBounds = new Dictionary<(double, double), double>();
         public Dictionary<(double, double), double> abUpperBounds = new Dictionary<(double, double), double>();
 
-        public double LowerBound
-        {
-            get;
-            private set;
-        }
-
-        public double UpperBound
-        {
-            get;
-            private set;
-        }
         public int[] optimalAssignment { get; private set; }
         public double BestLowerBoundA { get; private set; }
         public double BestLowerBoundB { get; private set; }
         public double BestUpperBoundA { get; private set; }
         public double BestUpperBoundB { get; private set; }
+
+        private double BestUpperBound;
+        private double BestLowerBound;
+
         public VertexPartialMatchingNode(
                 Graph<V, VA, EA> G,
                 Graph<V, VA, EA> H,
@@ -113,8 +106,8 @@ namespace AStarGraphNode
             var hVerticesKVP = H.Vertices.ToList();
 
 
-            var bestLowerBound = double.NegativeInfinity;
-            var bestUpperBound = double.PositiveInfinity;
+            BestLowerBound = double.NegativeInfinity;
+            BestUpperBound = double.PositiveInfinity;
             int[] bestLowerBoundAssignment;
             int[] bestUpperBoundAssignment;
 
@@ -516,13 +509,12 @@ namespace AStarGraphNode
                     // lower bound estimate
                     var abAssignment = LinearAssignmentSolver.LAPSolver.SolveAssignment(costMatrix);
                     var abAssignmentCost = LinearAssignmentSolver.LAPSolver.AssignmentCost(costMatrix, abAssignment);
-                    if (abAssignmentCost > bestLowerBound)
+                    if (abAssignmentCost > BestLowerBound)
                     {
-                        bestLowerBound = abAssignmentCost;
+                        BestLowerBound = abAssignmentCost;
                         bestLowerBoundAssignment = abAssignment;
                         BestLowerBoundA = a;
                         BestLowerBoundB = b;
-                        LowerBound = bestLowerBound;
                         optimalAssignment = abAssignment;
                     }
 
@@ -612,13 +604,12 @@ namespace AStarGraphNode
                             }
                         }
                     }
-                    if (realAssignmentCost < bestUpperBound)
+                    if (realAssignmentCost < BestUpperBound)
                     {
-                        bestUpperBound = realAssignmentCost;
+                        BestUpperBound = realAssignmentCost;
                         bestUpperBoundAssignment = abAssignment;
                         BestUpperBoundA = a;
                         BestUpperBoundB = b;
-                        UpperBound = bestUpperBound;
                     }
 
                     abLowerBounds.Add((a, b), abAssignmentCost);
