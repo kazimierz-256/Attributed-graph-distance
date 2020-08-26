@@ -13,4 +13,10 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AStar\AStar.csproj" />
+    <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
+    <ProjectReference Include="..\TemporalSubgraph\TemporalSubgraph.csproj" />
+  </ItemGroup>
+
 </Project>
