@@ -35,8 +35,8 @@ namespace AStarGraphNode
         public double BestUpperBoundA { get; private set; }
         public double BestUpperBoundB { get; private set; }
 
-        private double BestUpperBound;
-        private double BestLowerBound;
+        public double BestUpperBound;
+        public double BestLowerBound;
 
         public VertexPartialMatchingNode(
                 Graph<V, VA, EA> G,

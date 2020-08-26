@@ -55,8 +55,8 @@ namespace AStarGraphNodeTests
                 matchingParameters
             );
 
-            Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
-            Assert.Equal(matching1.LowerBound, matching3.LowerBound, precision);
+            Assert.Equal(matching1.BestLowerBound, matching2.BestLowerBound, precision);
+            Assert.Equal(matching1.BestLowerBound, matching3.BestLowerBound, precision);
         }
 
         private VertexPartialMatchingNode<V, VA, EA> AugmentationMatches<V, VA, EA>(
@@ -84,7 +84,7 @@ namespace AStarGraphNodeTests
                 matchingParameters
             );
 
-            Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
+            Assert.Equal(matching1.BestLowerBound, matching2.BestLowerBound, precision);
             return matching1;
         }
         [Fact]
@@ -97,7 +97,7 @@ namespace AStarGraphNodeTests
 
             (int, double) vertexGenerator() => (random.Next(), 0d);
 
-            var G = RandomGraphFactory.generateRandomInstance(
+            var G = RandomGraphFactory.GenerateRandomInstance(
                 vertices: 7,
                 density: .5,
                 directed: true,
@@ -106,7 +106,7 @@ namespace AStarGraphNodeTests
                 random
                 );
 
-            var H = RandomGraphFactory.generateRandomInstance(
+            var H = RandomGraphFactory.GenerateRandomInstance(
                 vertices: 4,
                 density: .7,
                 directed: true,
@@ -151,7 +151,7 @@ namespace AStarGraphNodeTests
                     H,
                     matchingParameters
                     );
-                Assert.Equal(matching1.LowerBound, matching2.LowerBound, precision);
+                Assert.Equal(matching1.BestLowerBound, matching2.BestLowerBound, precision);
             }
         }
 
@@ -162,7 +162,7 @@ namespace AStarGraphNodeTests
             double vertexAttributeGenerator() => random.NextDouble();
             double edgeAttributeGenerator() => random.NextDouble();
 
-            var G = RandomGraphFactory.generateRandomInstance(
+            var G = RandomGraphFactory.GenerateRandomInstance(
                 vertices: 7,
                 density: .5,
                 directed: true,
@@ -171,7 +171,7 @@ namespace AStarGraphNodeTests
                 random
                 );
 
-            var H = RandomGraphFactory.generateRandomInstance(
+            var H = RandomGraphFactory.GenerateRandomInstance(
                 vertices: 4,
                 density: .7,
                 directed: true,
