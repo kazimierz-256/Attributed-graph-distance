@@ -81,14 +81,14 @@ namespace Experimental
                         {
                             for (int iter = 0; iter < 5; iter++)
                             {
-                                var G = RandomGraphFactory.generateRandomInstance(
+                                var G = RandomGraphFactory.GenerateRandomInstance(
                                     vertices: gVertices,
                                     density: gDensity,
                                     directed: true,
                                     vertexAttributeGenerator: vertexAttributeGenerator,
                                     edgeAttributeGenerator: edgeAttributeGenerator
                                     );
-                                var H = RandomGraphFactory.generateRandomInstance(
+                                var H = RandomGraphFactory.GenerateRandomInstance(
                                     vertices: hVertices,
                                     density: hDensity,
                                     directed: true,
@@ -114,8 +114,8 @@ namespace Experimental
                                     matchingParameters
                                 );
 
-                                var myRelativeError = (matching.UpperBound - matching.LowerBound) / matching.LowerBound;
-                                var theirRelativeError = (matching.UpperBound - matching.abLowerBounds[RiesenBunke2009AB]) / matching.abLowerBounds[RiesenBunke2009AB];
+                                var myRelativeError = (matching.BestUpperBound - matching.BestLowerBound) / matching.BestLowerBound;
+                                var theirRelativeError = (matching.BestUpperBound - matching.abLowerBounds[RiesenBunke2009AB]) / matching.abLowerBounds[RiesenBunke2009AB];
                                 var eps = 1e-12;
                                 // if (theirRelativeError > eps)
                                 // {

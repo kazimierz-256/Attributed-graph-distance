@@ -5,7 +5,7 @@ namespace RandomGraphProvider
 {
     public static class RandomGraphFactory
     {
-        public static Graph<int, VA, EA> generateRandomInstance<VA, EA>(
+        public static Graph<int, VA, EA> GenerateRandomInstance<VA, EA>(
                 int vertices,
                 double density,
                 bool directed,
