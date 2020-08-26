@@ -4,10 +4,10 @@ using System.Text;
 
 namespace AStar
 {
-    public interface INode : IComparable
+    public interface INode
     {
-        double UpperBound { get; }
-        double LowerBound { get; }
+        double GetHeuristicValue();
+        double DistanceFromSource();
 
         List<INode> Expand();
     }

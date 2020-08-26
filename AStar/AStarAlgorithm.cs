@@ -5,7 +5,11 @@ namespace AStar
 {
     public class AStarAlgorithm
     {
-        public SortedSet<INode> Queue { get; } = new SortedSet<INode>();
+        public SortedSet<INode> Queue { get; } = new SortedSet<INode>(new AStarComparer<INode>());
+        public AStarAlgorithm(INode initialNode) : this(new[] { initialNode })
+        {
+        }
+
         public AStarAlgorithm(ICollection<INode> initialNodes)
         {
             if (initialNodes.Count == 0)
@@ -25,17 +29,11 @@ namespace AStar
         {
             var bestNode = BestNode;
             var expandedNodes = bestNode.Expand();
-            if (expandedNodes.Count == 0)
-            {
-                return false;
-            }
-            else
-            {
-                Queue.Remove(bestNode);
-                foreach (var node in expandedNodes)
-                    Queue.Add(node);
-                return true;
-            }
+            Queue.Remove(bestNode);
+            foreach (var node in expandedNodes)
+                Queue.Add(node);
+
+            return expandedNodes.Count > 0;
         }
     }
 }
