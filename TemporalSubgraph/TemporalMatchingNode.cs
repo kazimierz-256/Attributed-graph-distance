@@ -16,9 +16,13 @@ namespace TemporalSubgraph
 
         // sorted matchings between vertices of G1 and their respecitve matching vertices from G2
         private SortedDictionary<V, V> alreadyMatchedVertices = new SortedDictionary<V, V>();
+
+        // sorted dually-matched edge values between the graphs, allows for checking descendant consistency
         private SortedDictionary<EA, EA> alreadyMatchedEdges = new SortedDictionary<EA, EA>();
-        // bipartite graph of valid descendant matchings
+
+        // bipartite graph of valid descendant potential matchings
         private BipartiteGraph<V, EA> bipartitePossibilities = new BipartiteGraph<V, EA>();
+
         // an independent provider that estimates (*from above*) the number of remaining matches from the bipartite possibility graph
         private IHeuristic<V, EA> heuristic;
 
@@ -29,11 +33,12 @@ namespace TemporalSubgraph
 
             this.heuristic = heuristic;
 
-            // initially, all vertices from G1 could possibly lead to 
+            // initially, all vertices from G1 lead to a valid match with vertices from G2
             foreach (var u1 in graph1.Vertices.Keys)
                 bipartitePossibilities.potentialConnections.Add(u1, new SortedSet<V>(graph2.Vertices.Keys));
         }
 
+        // caching the heuristic value
         private bool heuristicAlreadyComputed = false;
         private double cachedHeuristicValue = double.NaN;
         public double GetHeuristicValue()
@@ -50,9 +55,10 @@ namespace TemporalSubgraph
 
         public double DistanceFromSource()
         {
-            return -alreadyMatchedVertices.Count;
+            return -1 * alreadyMatchedVertices.Count;
         }
 
+        // peek at the final matching
         public V Matching(V vertex1)
         {
             return alreadyMatchedVertices[vertex1];
@@ -60,15 +66,57 @@ namespace TemporalSubgraph
 
         public List<INode> Expand()
         {
+            if (bipartitePossibilities.potentialConnections.Keys.Count == 0)
+                return new List<INode>(capacity: 0);
+
             var descendants = new List<INode>();
 
             // does not need to be from U1, does not need to be random
             // TODO: experiment with different vertex choosing heuristics
             // TODO: should choose form an "envelope" rather than randomly!
-            var candidate1 = chooseCandidateVertex(bipartitePossibilities.potentialConnections.Keys);
-            V chooseCandidateVertex(IEnumerable<V> candidates) => candidates.First();
+            V candidate1 = default;
+            var candidate1assigned = false;
+            // ensure the next vertex is a neighbour
+            foreach (var candidate in bipartitePossibilities.potentialConnections.Keys)
+            {
+                var validCandidate = true;
+                if (alreadyMatchedVertices.Count > 0)
+                {
+                    validCandidate = false;
+                    if (graph1.IncomingEdges.ContainsKey(candidate))
+                        foreach (var otherVertex in graph1.IncomingEdges[candidate])
+                        {
+                            if (alreadyMatchedVertices.ContainsKey(otherVertex))
+                            {
+                                validCandidate = true;
+                                break;
+                            }
+                        }
+                    if (!validCandidate && graph1.OutgoingEdges.ContainsKey(candidate))
+                        foreach (var otherVertex in graph1.OutgoingEdges[candidate])
+                        {
+                            if (alreadyMatchedVertices.ContainsKey(otherVertex))
+                            {
+                                validCandidate = true;
+                                break;
+                            }
+                        }
+                }
+                if (validCandidate)
+                {
+                    candidate1 = candidate;
+                    candidate1assigned = true;
+                    break;
+                }
+            }
+
+            if (!candidate1assigned)
+                return new List<INode>(capacity: 0);
+
+            // this vertex should be connected to 
 
             var alreadyMatchedEdgeList = new List<EA>(alreadyMatchedEdges.Keys);
+            alreadyMatchedEdgeList.Sort();
 
             // match candidate1 with a valid candidate2 counterpart
             foreach (var candidate2 in bipartitePossibilities.potentialConnections[candidate1])
@@ -84,45 +132,51 @@ namespace TemporalSubgraph
                 // by definition, this is a valid matching
 
                 // IMPORTANT TODO: augment temporal connections from neighbours from graph1
+
+
+                bool isTemporalOrderViolated(List<EA> edgeList, SortedDictionary<EA, EA> edgeMatchings, EA edgeAttribute, EA matchingEdgeAttribute)
+                {
+                    var afterEdgeValueIndex = ~edgeList.BinarySearch(edgeAttribute);
+                    var beforeEdgeValueIndex = afterEdgeValueIndex - 1;
+
+                    if (beforeEdgeValueIndex >= 0)
+                    {
+                        var matchedBeforeEdgeValue = edgeList[beforeEdgeValueIndex];
+                        if (edgeAttribute.CompareTo(matchedBeforeEdgeValue) != matchingEdgeAttribute.CompareTo(edgeMatchings[matchedBeforeEdgeValue]))
+                        {
+                            return true;
+                        }
+                    }
+
+                    if (afterEdgeValueIndex < edgeList.Count)
+                    {
+                        var matchedAfterEdgeValue = edgeList[afterEdgeValueIndex];
+                        if (edgeAttribute.CompareTo(matchedAfterEdgeValue) != matchingEdgeAttribute.CompareTo(edgeMatchings[matchedAfterEdgeValue]))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                var temporalMatchingToBeAdded = new SortedDictionary<EA, EA>();
+
                 var temporalOrderViolated = false;
                 if (graph1.IncomingEdges.ContainsKey(candidate1))
                     foreach (var incomingVertex in graph1.IncomingEdges[candidate1])
                     {
-                        if (alreadyMatchedVertices.ContainsKey(incomingVertex) && alreadyMatchedEdges.ContainsKey(graph1.Edges[(incomingVertex, candidate1)]))
+                        if (alreadyMatchedVertices.ContainsKey(incomingVertex))
                         {
                             // make sure the connection does not violate the temporal order, otherwise skip adding this to the descendant
                             var edgeAttribute = graph1.Edges[(incomingVertex, candidate1)];
-                            var matchingEdgeAttribute = alreadyMatchedEdges[edgeAttribute];
-
-                            var afterEdgeValueIndex = -alreadyMatchedEdgeList.BinarySearch(edgeAttribute);
-                            var beforeEdgeValueIndex = afterEdgeValueIndex - 1;
-
-                            if (beforeEdgeValueIndex >= 0)
+                            var matchingEdge = (alreadyMatchedVertices[incomingVertex], candidate2);
+                            if (graph2.ContainsEdge(matchingEdge))
                             {
-                                var matchedBeforeEdgeValue = alreadyMatchedEdgeList[beforeEdgeValueIndex];
-                                if (edgeAttribute.CompareTo(matchedBeforeEdgeValue) != matchingEdgeAttribute.CompareTo(alreadyMatchedEdges[matchedBeforeEdgeValue]))
-                                {
-                                    temporalOrderViolated = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
-                                }
-                            }
+                                var matchingEdgeAttribute = graph2.Edges[matchingEdge];
 
-                            if (afterEdgeValueIndex < alreadyMatchedEdgeList.Count)
-                            {
-                                var matchedAfterEdgeValue = alreadyMatchedEdgeList[afterEdgeValueIndex];
-                                if (edgeAttribute.CompareTo(matchedAfterEdgeValue) != matchingEdgeAttribute.CompareTo(alreadyMatchedEdges[matchedAfterEdgeValue]))
-                                {
-                                    temporalOrderViolated = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
-                                }
+                                descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
+                                temporalMatchingToBeAdded.Add(edgeAttribute, matchingEdgeAttribute);
                             }
                         }
                     }
@@ -133,41 +187,17 @@ namespace TemporalSubgraph
                 if (graph1.OutgoingEdges.ContainsKey(candidate1))
                     foreach (var outgoingVertex in graph1.OutgoingEdges[candidate1])
                     {
-                        if (alreadyMatchedVertices.ContainsKey(outgoingVertex) && alreadyMatchedEdges.ContainsKey(graph1.Edges[(candidate1, outgoingVertex)]))
+                        if (alreadyMatchedVertices.ContainsKey(outgoingVertex))
                         {
                             // make sure the connection does not violate the temporal order, otherwise skip adding this to the descendant
                             var edgeAttribute = graph1.Edges[(candidate1, outgoingVertex)];
-                            var matchingEdgeAttribute = alreadyMatchedEdges[edgeAttribute];
-
-                            var afterEdgeValueIndex = -alreadyMatchedEdgeList.BinarySearch(edgeAttribute);
-                            var beforeEdgeValueIndex = afterEdgeValueIndex - 1;
-
-                            if (beforeEdgeValueIndex >= 0)
+                            var matchingEdge = (candidate2, alreadyMatchedVertices[outgoingVertex]);
+                            if (graph2.ContainsEdge(matchingEdge))
                             {
-                                var matchedBeforeEdgeValue = alreadyMatchedEdgeList[beforeEdgeValueIndex];
-                                if (edgeAttribute.CompareTo(matchedBeforeEdgeValue) != matchingEdgeAttribute.CompareTo(alreadyMatchedEdges[matchedBeforeEdgeValue]))
-                                {
-                                    temporalOrderViolated = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
-                                }
-                            }
+                                var matchingEdgeAttribute = graph2.Edges[matchingEdge];
 
-                            if (afterEdgeValueIndex < alreadyMatchedEdgeList.Count)
-                            {
-                                var matchedAfterEdgeValue = alreadyMatchedEdgeList[afterEdgeValueIndex];
-                                if (edgeAttribute.CompareTo(matchedAfterEdgeValue) != matchingEdgeAttribute.CompareTo(alreadyMatchedEdges[matchedAfterEdgeValue]))
-                                {
-                                    temporalOrderViolated = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
-                                }
+                                descendantEdgeMatchings.Add(edgeAttribute, matchingEdgeAttribute);
+                                temporalMatchingToBeAdded.Add(edgeAttribute, matchingEdgeAttribute);
                             }
                         }
                     }
@@ -175,11 +205,11 @@ namespace TemporalSubgraph
                 if (temporalOrderViolated)
                     continue;
 
-                // TODO: consider leaving out the candidate1
-
                 // all neighbouring temporal edges are valid, proceed with generating the descendant
 
                 // TODO: generate the bipartite graph (remove potential connections... maybe integrate with previous steps?)
+                var descendantEdgeMatchingList = new List<EA>(descendantEdgeMatchings.Keys);
+                descendantEdgeMatchingList.Sort();
 
                 // confirm descendant matching whether they are still valid: after augmenting connections from candidate1 their connections should remain valid
                 var descendantBipartitePossibilities = new BipartiteGraph<V, EA>();
@@ -190,109 +220,95 @@ namespace TemporalSubgraph
                     if (potentialConnection.Key.Equals(candidate1))
                         continue;
 
-                    // given a connection
+                    // given a potentially valid connection
                     foreach (var connection2 in potentialConnection.Value)
                     {
-                        // make sure its neighbouring connections (whenever matched) in graph1 do not violate the temporal order
+                        if (connection2.Equals(candidate2))
+                            continue;
 
-                        if (graph1.IncomingEdges.ContainsKey(potentialConnection.Key))
+                        // make sure its neighbouring connections (whenever matched) in graph1 do not violate the (new) temporal order
+                        temporalOrderViolated = false;
+
+                        if (descendantEdgeMatchingList.Count > 0 && graph1.IncomingEdges.ContainsKey(potentialConnection.Key))
                             foreach (var incomingVertex in graph1.IncomingEdges[potentialConnection.Key])
                             {
-                                if (alreadyMatchedVertices.ContainsKey(incomingVertex) && alreadyMatchedEdges.ContainsKey(graph1.Edges[(incomingVertex, potentialConnection.Key)]))
+                                if (descendantMatchedVertices.ContainsKey(incomingVertex))
                                 {
-                                    // make sure the connection does not violate the temporal order, otherwise skip adding this to the descendant
+                                    var edge = graph1.Edges[(incomingVertex, potentialConnection.Key)];
+
+                                    var counterpartEdge = (descendantMatchedVertices[incomingVertex], connection2);
+                                    if (graph2.ContainsEdge(counterpartEdge))
+                                    {
+                                        if (isTemporalOrderViolated(descendantEdgeMatchingList, descendantEdgeMatchings, edge, graph2.Edges[counterpartEdge]))
+                                        {
+                                            temporalOrderViolated = true;
+                                            break;
+                                        }
+                                    }
                                 }
                             }
-                        alreadyMatchedEdges.
+
+                        if (temporalOrderViolated)
+                            continue;
+
+                        if (descendantEdgeMatchingList.Count > 0 && graph1.OutgoingEdges.ContainsKey(potentialConnection.Key))
+                            foreach (var outgoingVertex in graph1.OutgoingEdges[potentialConnection.Key])
+                            {
+                                if (descendantMatchedVertices.ContainsKey(outgoingVertex))
+                                {
+                                    var edge = graph1.Edges[(potentialConnection.Key, outgoingVertex)];
+
+                                    var counterpartEdge = (connection2, descendantMatchedVertices[outgoingVertex]);
+                                    if (graph2.ContainsEdge(counterpartEdge))
+                                    {
+                                        if (isTemporalOrderViolated(descendantEdgeMatchingList, descendantEdgeMatchings, edge, graph2.Edges[counterpartEdge]))
+                                        {
+                                            temporalOrderViolated = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                        if (temporalOrderViolated)
+                            continue;
+
+                        if (!descendantBipartitePossibilities.potentialConnections.ContainsKey(potentialConnection.Key))
+                            descendantBipartitePossibilities.potentialConnections.Add(potentialConnection.Key, new SortedSet<V>());
+                        descendantBipartitePossibilities.potentialConnections[potentialConnection.Key].Add(connection2);
                     }
                 }
-
-                // restrict the descendant bipartite graph
-                // find an upper bound for bipartite matching between U1 and U2
-                //var descendantBipartitePossibilities = new BipartiteGraph<V, EA>();
-                //{
-                //    // for each existing connection in sorted order
-                //    var preexistingMatchIteratorAfter = bipartitePossibilities.potentialEdgeMatchings.GetEnumerator();
-                //    var preexistingMatchCurrentBefore = preexistingMatchIteratorAfter.Current;
-                //    var beforeIteratorStarted = false;
-                //    var afterIteratorEnded = false;
-                //    var existsElement = preexistingMatchIteratorAfter.MoveNext();
-                //    if (!existsElement)
-                //    {
-                //        throw new Exception("There should be at least 1 preexistent matching!");
-                //    }
-
-                //    foreach (var candidateMatch in bipartitePossibilities.potentialEdgeMatchings)
-                //    {
-                //        if (candidateMatch.Value.FromVertex == candidate1 || candidateMatch.Value.ToVertex == candidate2)
-                //            continue;
-
-                //        // invariant: after.key is >= candidateMatch.key
-                //        while (preexistingMatchIteratorAfter.Current.Key.CompareTo(candidateMatch.Key) < 0)
-                //        {
-                //            preexistingMatchCurrentBefore = preexistingMatchIteratorAfter.Current;
-                //            beforeIteratorStarted = true;
-                //            var nextElementExists = preexistingMatchIteratorAfter.MoveNext();
-                //            if (!nextElementExists)
-                //            {
-                //                afterIteratorEnded = true;
-                //                break;
-                //            }
-                //        }
-
-                //        if (beforeIteratorStarted
-                //            && candidateMatch.Key.CompareTo(preexistingMatchCurrentBefore.Key) != candidateMatch.Value.EdgeValue.CompareTo(preexistingMatchCurrentBefore.Value))
-                //            continue;
-
-                //        if (!afterIteratorEnded
-                //            && candidateMatch.Key.CompareTo(preexistingMatchIteratorAfter.Current.Key) != candidateMatch.Value.EdgeValue.CompareTo(preexistingMatchIteratorAfter.Current.Value))
-                //            continue;
-
-                //        descendantBipartitePossibilities.potentialEdgeMatchings.Add(candidateMatch.Key, candidateMatch.Value);
-                //    }
-                //}
 
                 var descendant = new TemporalMatchingNode<V, VA, EA>(
                     graph1,
                     graph2,
-                    descendantMatchedVertices,
-                    descendantEdgeMatchings,
-                    descendantBipartitePossibilities,
+                    descendantMatchedVertices,// taken care of
+                    descendantEdgeMatchings,// taken care of
+                    descendantBipartitePossibilities,// TODO
                     heuristic
                 );
                 descendants.Add(descendant);
             }
 
 
-            // TODO: consider removing candidate1
+            // also consider removing candidate1
+            // simply create a descendant without candidate1
+            var bipartitePossibilitiesWithoutCandidate1 = bipartitePossibilities.Clone();
+            bipartitePossibilitiesWithoutCandidate1.potentialConnections.Remove(candidate1);
+            var descendantWithoutCandidate1 = new TemporalMatchingNode<V, VA, EA>(
+                graph1,
+                graph2,
+                new SortedDictionary<V, V>(alreadyMatchedVertices),
+                new SortedDictionary<EA, EA>(alreadyMatchedEdges),
+                bipartitePossibilitiesWithoutCandidate1,
+                heuristic
+                );
+            descendants.Add(descendantWithoutCandidate1);
 
-            //  try not matching candidate1 with anything
-
-            // try each connection from the bipartite graph
-            // mark down the new matching
-            // carefully create descendant nodes
-
-            foreach (var candidate2 in bipartitePossibilities.potentialConnections[candidate1])
-            {
-                if (bipartiteValidConnections.connections.Contains((candidate1, candidate2)))
-                {
-                    var descendantMatchings = new Dictionary<V, V>(alreadyMatchedVertices);
-                    // verify the matching is existant and valid!
-                    descendantMatchings.Add(candidate1, candidate2);
-                    var newBipartiteValidConnections = RestrictBipartiteGraph(
-                        descendantU1,
-                        descendantU2,
-                        bipartiteValidConnections,
-                        descendantMatchings
-                        );
-                }
-            }
-
-            // remove candidate1 and expand its descendants here!
-
-            return null.Expand();
+            return descendants;
         }
 
+        // convenient way to create a descendant node
         public TemporalMatchingNode(
             Graph<V, VA, EA> graph1,
             Graph<V, VA, EA> graph2,

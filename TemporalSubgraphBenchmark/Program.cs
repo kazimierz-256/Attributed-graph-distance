@@ -16,14 +16,14 @@ namespace TemporalSubgraphBenchmark
             var density = .5d;
             var randomTemporalGraph1 = RandomGraphFactory.GenerateRandomInstance(nodes, density, true, vertexAttributeGenerator, edgeAttributeGenerator);
             var randomTemporalGraph2 = RandomGraphFactory.GenerateRandomInstance(nodes, density, true, vertexAttributeGenerator, edgeAttributeGenerator);
-            var initialNode = new TemporalMatchingNode<int, double, double>(randomTemporalGraph1, randomTemporalGraph2);
-            var aStarAlgorithm = new AStarAlgorithm<TemporalMatchingNode<int, double, double>>(initialNode);
+            //var initialNode = new TemporalMatchingNode<int, double, double>(randomTemporalGraph1, randomTemporalGraph2);
+            //var aStarAlgorithm = new AStarAlgorithm<TemporalMatchingNode<int, double, double>>(initialNode);
 
-            while (aStarAlgorithm.Queue.Count > 0)
-            {
-                aStarAlgorithm.ExpandBestNode();
-                var bestNode = aStarAlgorithm.BestNode;
-            }
+            //while (aStarAlgorithm.Queue.Count > 0)
+            //{
+            //    aStarAlgorithm.ExpandBestNode();
+            //    var bestNode = aStarAlgorithm.BestNode;
+            //}
         }
     }
 }
