@@ -41,22 +41,7 @@ namespace TemporalSubgraphTests
             var algorithm = new AStarAlgorithm<TemporalMatchingNode<string, int, int>>(initialNode);
 
             // Act
-            var absolutelyBestNode = initialNode;
-            var lowestAnalyzedDistanceValue = double.PositiveInfinity;
-            while (algorithm.Queue.Count > 0)
-            {
-                var bestNode = algorithm.BestNode;
-                var nodeDistance = bestNode.DistanceFromSource();
-                if (nodeDistance < lowestAnalyzedDistanceValue)
-                {
-                    lowestAnalyzedDistanceValue = nodeDistance;
-                    absolutelyBestNode = bestNode;
-                }
-
-                algorithm.ExpandBestNode();
-                algorithm.Queue.Remove(bestNode);
-            }
-            var temporalMatching = absolutelyBestNode;
+            var temporalMatching = algorithm.ExpandRecursively();
 
             // Assert
             Assert.Equal("1", temporalMatching.Matching("B"));

@@ -1,4 +1,5 @@
-﻿using AStar;
+﻿using AlgorithmInternalBenchmark;
+using AStar;
 using AttributedGraph;
 using System;
 using System.Collections.Generic;
@@ -41,8 +42,12 @@ namespace TemporalSubgraph
         // caching the heuristic value
         private bool heuristicAlreadyComputed = false;
         private double cachedHeuristicValue = double.NaN;
+
+        public Benchmark<string> Benchmark { get; set; }
+
         public double GetHeuristicValue()
         {
+            Benchmark?.StartBenchmark("Heuristic");
             if (!heuristicAlreadyComputed)
             {
                 // compute the *negative* of upper bound by a heuristic provider
@@ -50,6 +55,7 @@ namespace TemporalSubgraph
                 heuristicAlreadyComputed = true;
             }
 
+            Benchmark?.StopBenchmark("Heuristic");
             return cachedHeuristicValue;
         }
 
@@ -66,8 +72,15 @@ namespace TemporalSubgraph
 
         public List<INode> Expand()
         {
+            Benchmark?.StopBenchmark("Expanding except");
+            Benchmark?.StartBenchmark("Expand");
+
             if (bipartitePossibilities.potentialConnections.Keys.Count == 0)
+            {
+                Benchmark?.StopBenchmark("Expand");
+                Benchmark?.StartBenchmark("Expanding except");
                 return new List<INode>(capacity: 0);
+            }
 
             var descendants = new List<INode>();
 
@@ -111,7 +124,11 @@ namespace TemporalSubgraph
             }
 
             if (!candidate1assigned)
+            {
+                Benchmark?.StopBenchmark("Expand");
+                Benchmark?.StartBenchmark("Expanding except");
                 return new List<INode>(capacity: 0);
+            }
 
             // this vertex should be connected to 
 
@@ -331,9 +348,9 @@ namespace TemporalSubgraph
                 var descendant = new TemporalMatchingNode<V, VA, EA>(
                     graph1,
                     graph2,
-                    descendantMatchedVertices,// taken care of
-                    descendantEdgeMatchings,// taken care of
-                    descendantBipartitePossibilities,// TODO
+                    descendantMatchedVertices,
+                    descendantEdgeMatchings,
+                    descendantBipartitePossibilities,
                     heuristic
                 );
                 descendants.Add(descendant);
@@ -354,6 +371,8 @@ namespace TemporalSubgraph
                 );
             descendants.Add(descendantWithoutCandidate1);
 
+            Benchmark?.StopBenchmark("Expand");
+            Benchmark?.StartBenchmark("Expanding except");
             return descendants;
         }
 
