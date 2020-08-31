@@ -18,9 +18,9 @@ namespace TemporalSubgraphBenchmark
             var nodes = 100;
             var density = .9d;
             var randomTemporalGraph1 = RandomGraphFactory.GenerateRandomInstance(nodes, density, true, vertexAttributeGenerator, edgeAttributeGenerator, random1);
-            var randomTemporalGraph2 = RandomGraphFactory.GenerateRandomInstance(nodes, density, true, vertexAttributeGenerator, edgeAttributeGenerator, random2);
+            var randomTemporalGraph2 = RandomGraphFactory.GenerateRandomInstance(nodes, density, true, vertexAttributeGenerator, edgeAttributeGenerator, random2, nodes);
 
-            var heuristic = new DijkstraHeuristic<int, double>();
+            var heuristic = new EliminationHeuristic<int, double>();
 
             var initialNode = new TemporalMatchingNode<int, double, double>(randomTemporalGraph1, randomTemporalGraph2, heuristic);
 

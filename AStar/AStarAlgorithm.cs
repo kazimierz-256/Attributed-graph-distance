@@ -40,6 +40,7 @@ namespace AStar
         }
 
         public T BestNode => Queue.Min;
+        public T WorstNode => Queue.Max;
 
         ///// <summary>
         ///// Expands the best node, removes it, and inserts its descendants into the queue.
@@ -73,18 +74,28 @@ namespace AStar
                     lowestAnalyzedDistanceValue = nodeDistance;
                     absolutelyBestNode = bestNode;
                     Logger?.Invoke($"Found better solution: {lowestAnalyzedDistanceValue}");
-                }
 
-                // there is absolutely no chance of finding a better solution
-                if (nodeAstarValue > lowestAnalyzedDistanceValue)
+                    Benchmark.StartBenchmark("Worst Node Castration");
+                    var worstNode = WorstNode;
+                    var removedNodesCount = 0;
+                    while (worstNode.DistanceFromSource() + worstNode.GetHeuristicValue() > lowestAnalyzedDistanceValue)
+                    {
+                        Queue.Remove(worstNode);
+                        worstNode = WorstNode;
+                        removedNodesCount++;
+                    }
+                    Benchmark.StopBenchmark("Worst Node Castration");
+                    if (removedNodesCount > 0)
+                        Logger?.Invoke($"Removed {removedNodesCount} worst nodes");
+                }
+                else if (nodeAstarValue > lowestAnalyzedDistanceValue)
+                    // there is absolutely no chance of finding a better solution
                     break;
 
                 // expand best node
-                Benchmark?.StartBenchmark("Expanding outer");
-                Benchmark?.StartBenchmark("Expanding except");
+                Benchmark?.StartBenchmark("Expand outer");
                 var expandedNodes = bestNode.Expand();
-                Benchmark?.StopBenchmark("Expanding except");
-                Benchmark?.StopBenchmark("Expanding outer");
+                Benchmark?.StopBenchmark("Expand outer");
 
                 Benchmark?.StartBenchmark("Adding descendants");
                 foreach (var node in expandedNodes)

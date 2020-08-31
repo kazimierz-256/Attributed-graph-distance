@@ -35,7 +35,7 @@ namespace TemporalSubgraphTests
             graph2.AddEdge(("2", "3"), 2);
             graph2.AddEdge(("3", "1"), 3);
 
-            var heuristic = new DijkstraHeuristic<string, int>();
+            var heuristic = new TrivialHeuristic<string, int>();
 
             var initialNode = new TemporalMatchingNode<string, int, int>(graph1, graph2, heuristic);
             var algorithm = new AStarAlgorithm<TemporalMatchingNode<string, int, int>>(initialNode);

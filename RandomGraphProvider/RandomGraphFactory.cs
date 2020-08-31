@@ -11,13 +11,14 @@ namespace RandomGraphProvider
                 bool directed,
                 Func<VA> vertexAttributeGenerator,
                 Func<EA> edgeAttributeGenerator,
-                Random random = null
+                Random random = null,
+                int vertexOffset = 0
             )
         {
             var graph = new Graph<int, VA, EA>(directed);
 
             for (int i = 0; i < vertices; i++)
-                graph.AddVertex(i, vertexAttributeGenerator());
+                graph.AddVertex(i + vertexOffset, vertexAttributeGenerator());
 
             if (random == null)
                 random = new Random();
@@ -27,7 +28,7 @@ namespace RandomGraphProvider
                 for (int j = jstart; j < vertices; j++)
                 {
                     if (random.NextDouble() <= density)
-                        graph.AddEdge((i, j), edgeAttributeGenerator());
+                        graph.AddEdge((i + vertexOffset, j + vertexOffset), edgeAttributeGenerator());
                 }
             }
 
