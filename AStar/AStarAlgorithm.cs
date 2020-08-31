@@ -75,7 +75,7 @@ namespace AStar
                     absolutelyBestNode = bestNode;
                     Logger?.Invoke($"Found better solution: {lowestAnalyzedDistanceValue}");
 
-                    Benchmark.StartBenchmark("Worst Node Castration");
+                    Benchmark.StartBenchmark("Worst Node pruning");
                     var worstNode = WorstNode;
                     var removedNodesCount = 0;
                     while (worstNode.DistanceFromSource() + worstNode.GetHeuristicValue() > lowestAnalyzedDistanceValue)
@@ -84,7 +84,7 @@ namespace AStar
                         worstNode = WorstNode;
                         removedNodesCount++;
                     }
-                    Benchmark.StopBenchmark("Worst Node Castration");
+                    Benchmark.StopBenchmark("Worst Node pruning");
                     if (removedNodesCount > 0)
                         Logger?.Invoke($"Removed {removedNodesCount} worst nodes");
                 }
