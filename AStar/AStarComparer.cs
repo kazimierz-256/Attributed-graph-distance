@@ -24,7 +24,13 @@ namespace AStar
 
             var priority2 = x.DistanceFromSource().CompareTo(y.DistanceFromSource());
             Benchmark?.StopBenchmark("AStarComparer.Compare");
-            return priority2;
+
+            if (priority2 != 0)
+            {
+                return priority2;
+            }
+
+            return x.GetHashCode().CompareTo(y.GetHashCode());
         }
     }
 }
