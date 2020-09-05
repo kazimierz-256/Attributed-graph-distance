@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace AttributedGraph
@@ -16,7 +17,7 @@ namespace AttributedGraph
             {
                 random = new Random();
             }
-            var vertices = graph.Vertices.ToList();
+            var vertices = new List<V>(capacity: graph.VertexCount);
             var indexes = new int[graph.VertexCount];
             var randomNumbers = new int[graph.VertexCount];
             for (int i = 0; i < graph.VertexCount; i++)
@@ -33,7 +34,11 @@ namespace AttributedGraph
                 var newVertex = kvp.Key;
                 var newVertexAttribute = kvp.Value;
                 if (cloneVertex != null)
+                {
                     (newVertex, newVertexAttribute) = cloneVertex(kvp.Key, kvp.Value);
+                }
+
+                vertices.Add(newVertex);
                 newGraph.AddVertex(newVertex, newVertexAttribute);
             }
 
@@ -41,14 +46,14 @@ namespace AttributedGraph
             {
                 for (int j = 0; j < graph.VertexCount; j++)
                 {
-                    var edge = (vertices[i].Key, vertices[j].Key);
+                    var edge = (vertices[i], vertices[j]);
                     if (graph.ContainsEdge(edge))
                     {
                         var newEdgeAttribute = graph[edge];
                         var newEdge = edge;
                         if (cloneEdge != null)
                             (newEdge, newEdgeAttribute) = cloneEdge(edge, newEdgeAttribute);
-                        newGraph.AddEdge((vertices[indexes[i]].Key, vertices[indexes[j]].Key), newEdgeAttribute);
+                        newGraph.AddEdge((vertices[indexes[i]], vertices[indexes[j]]), newEdgeAttribute);
                     }
                 }
             }
