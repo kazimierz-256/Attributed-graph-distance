@@ -132,14 +132,14 @@ namespace TemporalSubgraphTests
             }
         }
 
-        static IHeuristic<int, double> generateExactHeuristic()
+        private static IHeuristic<int, double> generateExactHeuristic()
         {
             var counter = 100000;
             return new ExactHeuristic<int, double>(() => ++counter);
         }
-        static IHeuristic<int, double> generateTrivialHeuristic() => new TrivialHeuristic<int, double>();
+        private static IHeuristic<int, double> generateTrivialHeuristic() => new TrivialHeuristic<int, double>();
 
-        static IEnumerable<IHeuristic<int, double>> generateAllHeuristics()
+        private static IEnumerable<IHeuristic<int, double>> generateAllHeuristics()
         {
             yield return generateTrivialHeuristic();
             yield return generateExactHeuristic();
