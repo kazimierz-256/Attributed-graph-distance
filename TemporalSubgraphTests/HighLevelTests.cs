@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Intrinsics;
+using System.Threading.Tasks;
 using TemporalSubgraph;
 using TemporalSubgraph.Heuristics;
 using Xunit;
@@ -84,11 +85,11 @@ namespace TemporalSubgraphTests
             var offset = verticesCount;
             foreach (var heuristic in generateAllHeuristics())
             {
-                foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                foreach (var supergraphVertexCount in Enumerable.Range(2, verticesCount))
                 {
-                    foreach (var supergraphVertexCount in Enumerable.Range(2, verticesCount))
+                    foreach (var subgraphVertexCount in Enumerable.Range(0, supergraphVertexCount))
                     {
-                        foreach (var subgraphVertexCount in Enumerable.Range(0, supergraphVertexCount))
+                        foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
                         {
                             var random = new Random(subgraphVertexCount + verticesCount * supergraphVertexCount + (int)(density * 10000));
                             var random2 = new Random(random.Next());
@@ -98,6 +99,33 @@ namespace TemporalSubgraphTests
                             var subgraphPermuted = Transform.PermuteClone(subgraph, random3, (id, attr) => (id + offset, attr), (pair, attr) => ((pair.Item1 + offset, pair.Item2 + offset), attr));
 
                             yield return new object[] { $"SubgraphVC: {subgraphVertexCount}, supergraphVC: {supergraphVertexCount}, density: {density:0.00}", heuristic, subgraphPermuted, supergraph };
+                        }
+                    }
+                }
+            }
+        }
+
+        public static IEnumerable<object[]> RandomCases(string name)
+        {
+            var densitiyCount = 6;
+            var verticesCount = 7;
+            var offset = verticesCount;
+            foreach (var vertexCount1 in Enumerable.Range(0, verticesCount))
+            {
+                foreach (var vertexCount2 in Enumerable.Range(0, vertexCount1))
+                {
+                    foreach (var density1 in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                    {
+                        foreach (var density2 in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                        {
+                            var random = new Random(vertexCount1 + verticesCount * vertexCount2 + (int)(density1 * 1000) + (int)(density2 * 100000));
+                            var random2 = new Random(random.Next());
+                            var random3 = new Random(random.Next());
+                            Func<double> edgeAttributeGenerator = () => random.NextDouble();
+                            var graph1 = RandomGraphFactory.GenerateRandomInstance(vertexCount1, density1, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false);
+                            var graph2 = RandomGraphFactory.GenerateRandomInstance(vertexCount1, density2, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false, vertexOffset: offset);
+
+                            yield return new object[] { $"VertexCount1: {vertexCount1}, density1: {density1:0.00}, vertexCount2: {vertexCount2}, density2: {density2:0.00}", graph1, graph2 };
                         }
                     }
                 }
@@ -147,6 +175,34 @@ namespace TemporalSubgraphTests
             // Assert
             Assert.True(graph1.VertexCount <= graph2.VertexCount);
             Assert.Equal(graph1.VertexCount, -1 * temporalMatching.DistanceFromSource());
+        }
+
+        [Theory]
+        [MemberData(nameof(RandomCases), "HeuristicComparison")]
+        public void HeuristicComparisonForRandomCases(string name, Graph<int, int, double> graph1, Graph<int, int, double> graph2)
+        {
+            // Arrange
+            var algorithms = new List<AStarAlgorithm<TemporalMatchingNode<int, int, double>>>();
+            foreach (var heuristic in generateAllHeuristics())
+            {
+                var initialNode = new TemporalMatchingNode<int, int, double>(graph1, graph2, heuristic, false);
+                algorithms.Add(new AStarAlgorithm<TemporalMatchingNode<int, int, double>>(initialNode));
+            }
+            var temporalMatchings = new TemporalMatchingNode<int, int, double>[algorithms.Count];
+
+            // Act
+            for (int i = 0; i < algorithms.Count; i++)
+            {
+                temporalMatchings[i] = algorithms[i].ExpandRecursively();
+            }
+
+            // Assert
+            var referenceMathcing = temporalMatchings[0];
+            for (int i = 1; i < temporalMatchings.Length; i++)
+            {
+                var currentMatching = temporalMatchings[i];
+                Assert.Equal(referenceMathcing.DistanceFromSource(), currentMatching.DistanceFromSource());
+            }
         }
     }
 }
