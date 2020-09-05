@@ -29,8 +29,17 @@ namespace AlgorithmInternalBenchmark
             stopwatch.Start();
         }
 
-        public TimeSpan GetIntermittentResult(T category) => timer[category].Elapsed;
-        public int GetIntermittentCount(T category) => startEventCounter[category];
+        public TimeSpan GetIntermittentResult(T category)
+        {
+            var categoryExists = timer.TryGetValue(category, out var elapsed);
+            return categoryExists ? elapsed.Elapsed : TimeSpan.Zero;
+        }
+
+        public int GetIntermittentCount(T category)
+        {
+            var categoryExists = startEventCounter.TryGetValue(category, out var count);
+            return categoryExists ? count : 0;
+        }
 
         public void DisplayRelativeTo(T dependentCategory, T referenceCategory)
         {
