@@ -56,12 +56,12 @@ namespace TemporalSubgraphTests
 
         public static IEnumerable<object[]> IsomorphicGraphCases(string name)
         {
-            var densitiyCount = 8;
-            var verticesCount = 8;
+            var densityCount = 9;
+            var verticesCount = 9;
             var offset = verticesCount;
             foreach (var heuristic in generateAllHeuristics())
             {
-                foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                foreach (var density in Enumerable.Range(1, densityCount).Select(integer => integer * 1d / densityCount))
                 {
                     foreach (var vertexCount in Enumerable.Range(2, verticesCount))
                     {
@@ -80,7 +80,7 @@ namespace TemporalSubgraphTests
 
         public static IEnumerable<object[]> SubgraphSupergraphCases(string name)
         {
-            var densitiyCount = 8;
+            var densityCount = 8;
             var verticesCount = 8;
             var offset = verticesCount;
             foreach (var heuristic in generateAllHeuristics())
@@ -89,7 +89,7 @@ namespace TemporalSubgraphTests
                 {
                     foreach (var subgraphVertexCount in Enumerable.Range(0, supergraphVertexCount))
                     {
-                        foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                        foreach (var density in Enumerable.Range(1, densityCount).Select(integer => integer * 1d / densityCount))
                         {
                             var random = new Random(subgraphVertexCount + verticesCount * supergraphVertexCount + (int)(density * 10000));
                             var random2 = new Random(random.Next());
@@ -107,16 +107,16 @@ namespace TemporalSubgraphTests
 
         public static IEnumerable<object[]> RandomCases(string name)
         {
-            var densitiyCount = 6;
+            var densityCount = 6;
             var verticesCount = 7;
             var offset = verticesCount;
             foreach (var vertexCount1 in Enumerable.Range(0, verticesCount))
             {
                 foreach (var vertexCount2 in Enumerable.Range(0, vertexCount1))
                 {
-                    foreach (var density1 in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                    foreach (var density1 in Enumerable.Range(1, densityCount).Select(integer => integer * 1d / densityCount))
                     {
-                        foreach (var density2 in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+                        foreach (var density2 in Enumerable.Range(1, densityCount).Select(integer => integer * 1d / densityCount))
                         {
                             var random = new Random(vertexCount1 + verticesCount * vertexCount2 + (int)(density1 * 1000) + (int)(density2 * 100000));
                             var random2 = new Random(random.Next());
