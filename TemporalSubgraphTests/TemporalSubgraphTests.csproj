@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AStar\AStar.csproj" />
     <ProjectReference Include="..\AttributedGraph\AttributedGraph.csproj" />
+    <ProjectReference Include="..\RandomGraphProvider\RandomGraphProvider.csproj" />
     <ProjectReference Include="..\TemporalSubgraph\TemporalSubgraph.csproj" />
   </ItemGroup>
 
