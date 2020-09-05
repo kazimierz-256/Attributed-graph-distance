@@ -15,6 +15,9 @@ namespace TemporalSubgraph.Heuristics
         {
             this.vertexGenerator = vertexGenerator;
         }
+
+        public string Name => "Exact";
+
         public double Compute(BipartiteGraph<V, EA> bipartitePossibilities)
         {
             if (bipartitePossibilities.potentialConnections.Count == 0 || bipartitePossibilities.potentialConnectionsReversed.Count == 0)
