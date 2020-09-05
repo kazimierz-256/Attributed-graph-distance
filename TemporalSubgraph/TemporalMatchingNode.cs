@@ -26,13 +26,15 @@ namespace TemporalSubgraph
 
         // an independent provider that estimates (*from above*) the number of remaining matches from the bipartite possibility graph
         private IHeuristic<V, EA> heuristic;
+        private readonly bool mustBeConnected;
 
-        public TemporalMatchingNode(Graph<V, VA, EA> graph1, Graph<V, VA, EA> graph2, IHeuristic<V, EA> heuristic)
+        public TemporalMatchingNode(Graph<V, VA, EA> graph1, Graph<V, VA, EA> graph2, IHeuristic<V, EA> heuristic, bool mustBeConnected = true)
         {
             this.graph1 = graph1;
             this.graph2 = graph2;
 
             this.heuristic = heuristic;
+            this.mustBeConnected = mustBeConnected;
 
             // initially, all vertices from G1 lead to a valid match with vertices from G2
             foreach (var u1 in graph1.Vertices.Keys)
@@ -94,7 +96,7 @@ namespace TemporalSubgraph
             foreach (var candidateKVP in bipartitePossibilities.potentialConnections)
             {
                 var validCandidate = true;
-                if (alreadyMatchedVertices.Count > 0)
+                if (mustBeConnected && alreadyMatchedVertices.Count > 0)
                 {
                     validCandidate = false;
                     if (graph1.IncomingEdges.ContainsKey(candidateKVP.Key))
@@ -313,8 +315,8 @@ namespace TemporalSubgraph
                             continue;
 
                         // IMPORTANT TODO: check if there are edges in the other graph that should be matched in the first one but aren't
-                        Benchmark?.DisplayRelativeTo("Graph2edgesMatch", "Expand");
-                        Benchmark?.StartBenchmark("Graph2edgesMatch");
+                        Benchmark?.DisplayRelativeTo("GraphEdgesMatch", "Expand");
+                        Benchmark?.StartBenchmark("GraphEdgesMatch");
                         foreach (var vertex in descendantMatchedVerticesReversed.Keys)
                         {
                             var incomingVertex = vertex;
@@ -343,7 +345,7 @@ namespace TemporalSubgraph
                                 }
                             }
                         }
-                        Benchmark?.StopBenchmark("Graph2edgesMatch");
+                        Benchmark?.StopBenchmark("GraphEdgesMatch");
 
                         if (temporalOrderViolated)
                             continue;
