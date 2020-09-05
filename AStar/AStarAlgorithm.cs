@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 
 namespace AStar
 {
@@ -42,20 +43,6 @@ namespace AStar
         public T BestNode => Queue.Min;
         public T WorstNode => Queue.Max;
 
-        ///// <summary>
-        ///// Expands the best node, removes it, and inserts its descendants into the queue.
-        ///// </summary>
-        ///// <returns>Did the best node expand into more nodes (is there still nodes to expand)</returns>
-        //public bool ExpandBestNode()
-        //{
-        //    var bestNode = BestNode;
-        //    var expandedNodes = bestNode.Expand();
-
-        //    foreach (var node in expandedNodes)
-        //        Queue.Add((T)node);
-
-        //    return expandedNodes.Count > 0;
-        //}
 
         public T ExpandRecursively()
         {
@@ -78,8 +65,9 @@ namespace AStar
                     Benchmark.StartBenchmark("Worst Node pruning");
                     var worstNode = WorstNode;
                     var removedNodesCount = 0;
-                    while (worstNode.DistanceFromSource() + worstNode.GetHeuristicValue() > lowestAnalyzedDistanceValue)
+                    while (Queue.Count > 0 && worstNode.DistanceFromSource() + worstNode.GetHeuristicValue() > lowestAnalyzedDistanceValue)
                     {
+                        Console.WriteLine("Removed worst node");
                         Queue.Remove(worstNode);
                         worstNode = WorstNode;
                         removedNodesCount++;
