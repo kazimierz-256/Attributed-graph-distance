@@ -68,7 +68,9 @@ namespace AStar
                     while (Queue.Count > 0 && worstNode.DistanceFromSource() + worstNode.GetHeuristicValue() > lowestAnalyzedDistanceValue)
                     {
                         Console.WriteLine("Removed worst node");
+                        Benchmark.StartBenchmark("Removed worst node");
                         Queue.Remove(worstNode);
+                        Benchmark.StopBenchmark("Removed worst node");
                         worstNode = WorstNode;
                         removedNodesCount++;
                     }
