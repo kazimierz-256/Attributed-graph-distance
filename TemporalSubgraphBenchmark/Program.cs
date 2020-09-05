@@ -75,21 +75,23 @@ namespace TemporalSubgraphBenchmark
                 var benchmark = new Benchmark<string>();
                 initialNode.Benchmark = benchmark;
 
+                var algorithm = new AStarAlgorithm<TemporalMatchingNode<int, double, double>>(initialNode, benchmark);
+
+                Console.WriteLine("Computing...");
+
                 benchmark.StartBenchmark("AStar");
-                var algorithm = new AStarAlgorithm<TemporalMatchingNode<int, double, double>>(initialNode);
+                var temporalMatching = algorithm.ExpandRecursively();
                 benchmark.StopBenchmark("AStar");
 
-                var temporalMatching = algorithm.ExpandRecursively();
-                
                 Console.WriteLine("Computed.");
 
-                var graph1density = graph1.EdgeCount * 100 / (graph1.VertexCount * graph1.VertexCount);
-                var graph2density = graph2.EdgeCount * 100 / (graph2.VertexCount * graph2.VertexCount);
+                var graph1density = graph1.EdgeCount * 1d / (graph1.VertexCount * graph1.VertexCount);
+                var graph2density = graph2.EdgeCount * 1d / (graph2.VertexCount * graph2.VertexCount);
                 var subgraphVertexCount = -temporalMatching.DistanceFromSource();
-                var subgraphDensity = temporalMatching.alreadyMatchedEdges.Count * 100 / (temporalMatching.alreadyMatchedVertices.Count * temporalMatching.alreadyMatchedVertices.Count);
-                var computationTime = temporalMatching.Benchmark.GetIntermittentResult("AStar").TotalMilliseconds;
-                var expansionCount = temporalMatching.Benchmark.GetIntermittentCount("Expand outer");
-                var removalCount = temporalMatching.Benchmark.GetIntermittentCount("Removed worst node");
+                var subgraphDensity = temporalMatching.alreadyMatchedEdges.Count * 1d / (temporalMatching.alreadyMatchedVertices.Count * temporalMatching.alreadyMatchedVertices.Count);
+                var computationTime = benchmark.GetIntermittentResult("AStar").TotalSeconds;
+                var expansionCount = benchmark.GetIntermittentCount("Expand outer");
+                var removalCount = benchmark.GetIntermittentCount("Removed worst node");
 
                 // size of graph1
                 // size of graph2
@@ -103,9 +105,9 @@ namespace TemporalSubgraphBenchmark
                 // number of nodes automatically pruned
 
                 using (var csvWriter = File.AppendText(csvExactPath))
-                    csvWriter.WriteLine($"{graph1.VertexCount},{graph2.VertexCount},{graph1density},{graph2density},{heuristic.Name},{subgraphVertexCount},{subgraphDensity},{computationTime},{expansionCount},{removalCount}");
+                    csvWriter.WriteLine($"{graph1.VertexCount},{graph2.VertexCount},{graph1density:0.00},{graph2density:0.00},{heuristic.Name},{subgraphVertexCount},{subgraphDensity:0.00},{computationTime:0.00},{expansionCount},{removalCount}");
                 using (var texWriter = File.AppendText(texExactPath))
-                    texWriter.WriteLine($"{graph1.VertexCount} & {graph2.VertexCount} & {graph1density} & {graph2density} & {heuristic.Name} & {subgraphVertexCount} & {subgraphDensity} & {computationTime} & {expansionCount} & {removalCount} \\\\");
+                    texWriter.WriteLine($"{graph1.VertexCount} & {graph2.VertexCount} & {graph1density:0.00} & {graph2density:0.00} & {heuristic.Name} & {subgraphVertexCount} & {subgraphDensity:0.00} & {computationTime:0.00} & {expansionCount} & {removalCount} \\\\");
 
                 Console.WriteLine("Saved.");
             }
