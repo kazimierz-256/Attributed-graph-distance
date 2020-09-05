@@ -4,6 +4,7 @@ using RandomGraphProvider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics;
 using TemporalSubgraph;
 using TemporalSubgraph.Heuristics;
 using Xunit;
@@ -52,54 +53,75 @@ namespace TemporalSubgraphTests
             Assert.Equal("3", temporalMatching.Matching("E"));
         }
 
-        public static IEnumerable<object[]> SubgraphSupergraphCases(string name)
+        public static IEnumerable<object[]> IsomorphicGraphCases(string name)
         {
             var densitiyCount = 8;
             var verticesCount = 8;
-            foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+            var offset = verticesCount;
+            foreach (var heuristic in generateAllHeuristics())
             {
-                foreach (var supergraphVertexCount in Enumerable.Range(2, verticesCount))
+                foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
                 {
-                    foreach (var subgraphVertexCount in Enumerable.Range(0, supergraphVertexCount))
+                    foreach (var vertexCount in Enumerable.Range(2, verticesCount))
                     {
-                        var random = new Random(subgraphVertexCount + verticesCount * supergraphVertexCount + (int)(density * 10000));
+                        var random = new Random(vertexCount + (int)(density * 10000));
                         var random2 = new Random(random.Next());
+                        var random3 = new Random(random.Next());
                         Func<double> edgeAttributeGenerator = () => random.NextDouble();
-                        var (subgraph, supergraph) = RandomGraphFactory.GenerateRandomInstanceWithASubinstance(subgraphVertexCount, supergraphVertexCount, density, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false);
-                        var subgraphPermuted = Transform.PermuteClone(subgraph);
+                        var graph1 = RandomGraphFactory.GenerateRandomInstance(vertexCount, density, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false);
+                        var graph2 = Transform.PermuteClone(graph1, random3, (id, attr) => (id + offset, attr), (pair, attr) => ((pair.Item1 + offset, pair.Item2 + offset), attr));
 
-                        yield return new object[] { $"SubgraphVC: {subgraphVertexCount}, supergraphVC: {supergraphVertexCount}, density: {density:0.00}", subgraphPermuted, supergraph };
+                        yield return new object[] { $"VertexCount: {vertexCount}, density: {density:0.00}", heuristic, graph1, graph2 };
                     }
                 }
             }
         }
 
-        public static IEnumerable<object[]> IsomorphicGraphCases(string name)
+        public static IEnumerable<object[]> SubgraphSupergraphCases(string name)
         {
-            var densitiyCount = 10;
-            var verticesCount = 10;
-            foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
+            var densitiyCount = 8;
+            var verticesCount = 8;
+            var offset = verticesCount;
+            foreach (var heuristic in generateAllHeuristics())
             {
-                foreach (var vertexCount in Enumerable.Range(2, verticesCount))
+                foreach (var density in Enumerable.Range(1, densitiyCount).Select(integer => integer * 1d / densitiyCount))
                 {
-                    var random = new Random(vertexCount + (int)(density * 10000));
-                    var random2 = new Random(random.Next());
-                    Func<double> edgeAttributeGenerator = () => random.NextDouble();
-                    var graph1 = RandomGraphFactory.GenerateRandomInstance(vertexCount, density, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false);
-                    var graph2 = Transform.PermuteClone(graph1);
+                    foreach (var supergraphVertexCount in Enumerable.Range(2, verticesCount))
+                    {
+                        foreach (var subgraphVertexCount in Enumerable.Range(0, supergraphVertexCount))
+                        {
+                            var random = new Random(subgraphVertexCount + verticesCount * supergraphVertexCount + (int)(density * 10000));
+                            var random2 = new Random(random.Next());
+                            var random3 = new Random(random.Next());
+                            Func<double> edgeAttributeGenerator = () => random.NextDouble();
+                            var (subgraph, supergraph) = RandomGraphFactory.GenerateRandomInstanceWithASubinstance(subgraphVertexCount, supergraphVertexCount, density, true, () => 0, edgeAttributeGenerator, random2, allowLoops: false);
+                            var subgraphPermuted = Transform.PermuteClone(subgraph, random3, (id, attr) => (id + offset, attr), (pair, attr) => ((pair.Item1 + offset, pair.Item2 + offset), attr));
 
-                    yield return new object[] { $"VertexCount: {vertexCount}, density: {density:0.00}", graph1, graph2 };
+                            yield return new object[] { $"SubgraphVC: {subgraphVertexCount}, supergraphVC: {supergraphVertexCount}, density: {density:0.00}", heuristic, subgraphPermuted, supergraph };
+                        }
+                    }
                 }
             }
         }
 
+        static IHeuristic<int, double> generateExactHeuristic()
+        {
+            var counter = 100000;
+            return new ExactHeuristic<int, double>(() => ++counter);
+        }
+        static IHeuristic<int, double> generateTrivialHeuristic() => new TrivialHeuristic<int, double>();
+
+        static IEnumerable<IHeuristic<int, double>> generateAllHeuristics()
+        {
+            yield return generateTrivialHeuristic();
+            yield return generateExactHeuristic();
+        }
+
         [Theory]
         [MemberData(nameof(IsomorphicGraphCases), "Isomorphic")]
-        public void IsomorphicGraphs(string name, Graph<int, int, double> graph1, Graph<int, int, double> graph2)
+        public void IsomorphicGraphs(string name, IHeuristic<int, double> heuristic, Graph<int, int, double> graph1, Graph<int, int, double> graph2)
         {
             // Arrange
-            var heuristic = new TrivialHeuristic<int, double>();
-
             var initialNode = new TemporalMatchingNode<int, int, double>(graph1, graph2, heuristic, false);
             var algorithm = new AStarAlgorithm<TemporalMatchingNode<int, int, double>>(initialNode);
 
@@ -113,11 +135,9 @@ namespace TemporalSubgraphTests
 
         [Theory]
         [MemberData(nameof(SubgraphSupergraphCases), "SubSupergraph")]
-        public void SubgraphsSupergraphs(string name, Graph<int, int, double> graph1, Graph<int, int, double> graph2)
+        public void SubgraphsSupergraphs(string name, IHeuristic<int, double> heuristic, Graph<int, int, double> graph1, Graph<int, int, double> graph2)
         {
             // Arrange
-            var heuristic = new TrivialHeuristic<int, double>();
-
             var initialNode = new TemporalMatchingNode<int, int, double>(graph1, graph2, heuristic, false);
             var algorithm = new AStarAlgorithm<TemporalMatchingNode<int, int, double>>(initialNode);
 
