@@ -26,6 +26,7 @@ namespace TemporalSubgraph
 
         // an independent provider that estimates (*from above*) the number of remaining matches from the bipartite possibility graph
         private IHeuristic<V, EA> heuristic;
+        // the following field should only be used for test purposes
         private readonly bool mustBeConnected;
 
         public TemporalMatchingNode(Graph<V, VA, EA> graph1, Graph<V, VA, EA> graph2, IHeuristic<V, EA> heuristic, bool mustBeConnected = true)
