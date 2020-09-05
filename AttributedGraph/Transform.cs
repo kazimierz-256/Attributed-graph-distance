@@ -32,13 +32,13 @@ namespace AttributedGraph
             foreach (var kvp in graph.Vertices)
             {
                 var newVertex = kvp.Key;
+                vertices.Add(newVertex);
                 var newVertexAttribute = kvp.Value;
                 if (cloneVertex != null)
                 {
                     (newVertex, newVertexAttribute) = cloneVertex(kvp.Key, kvp.Value);
                 }
 
-                vertices.Add(newVertex);
                 newGraph.AddVertex(newVertex, newVertexAttribute);
             }
 
@@ -53,7 +53,7 @@ namespace AttributedGraph
                         var newEdge = edge;
                         if (cloneEdge != null)
                             (newEdge, newEdgeAttribute) = cloneEdge(edge, newEdgeAttribute);
-                        newGraph.AddEdge((vertices[indexes[i]], vertices[indexes[j]]), newEdgeAttribute);
+                        newGraph.AddEdge((newEdge.Item1, newEdge.Item2), newEdgeAttribute);
                     }
                 }
             }
