@@ -9,7 +9,9 @@ namespace AlgorithmInternalBenchmark
     public class Benchmark<T>
     {
         private readonly Dictionary<T, Stopwatch> timer = new Dictionary<T, Stopwatch>();
+        private readonly Dictionary<T, int> startEventCounter = new Dictionary<T, int>();
         private readonly Dictionary<T, T> relativeTo = new Dictionary<T, T>();
+
         public void StartBenchmark(T category)
         {
             var elementExists = timer.TryGetValue(category, out var stopwatch);
@@ -17,15 +19,18 @@ namespace AlgorithmInternalBenchmark
             {
                 stopwatch = new Stopwatch();
                 timer.Add(category, stopwatch);
+                startEventCounter.Add(category, 0);
             }
 
             if (timer[category].IsRunning)
                 throw new Exception($"Timer {category} is already running");
 
+            startEventCounter[category]++;
             stopwatch.Start();
         }
 
         public TimeSpan GetIntermittentResult(T category) => timer[category].Elapsed;
+        public int GetIntermittentCount(T category) => startEventCounter[category];
 
         public void DisplayRelativeTo(T dependentCategory, T referenceCategory)
         {
