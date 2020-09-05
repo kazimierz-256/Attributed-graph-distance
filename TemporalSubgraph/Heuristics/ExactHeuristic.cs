@@ -17,6 +17,9 @@ namespace TemporalSubgraph.Heuristics
         }
         public double Compute(BipartiteGraph<V, EA> bipartitePossibilities)
         {
+            if (bipartitePossibilities.potentialConnections.Count == 0 || bipartitePossibilities.potentialConnectionsReversed.Count == 0)
+                return 0;
+
             var setA = new List<V>();
             var setB = new List<V>();
 
