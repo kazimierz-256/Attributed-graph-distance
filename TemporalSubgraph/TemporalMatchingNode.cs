@@ -16,10 +16,10 @@ namespace TemporalSubgraph
         private Graph<V, VA, EA> graph2;
 
         // sorted matchings between vertices of G1 and their respecitve matching vertices from G2
-        private SortedDictionary<V, V> alreadyMatchedVertices = new SortedDictionary<V, V>();
+        public SortedDictionary<V, V> alreadyMatchedVertices = new SortedDictionary<V, V>();
 
         // sorted dually-matched edge values between the graphs, allows for checking descendant consistency
-        private SortedDictionary<EA, EA> alreadyMatchedEdges = new SortedDictionary<EA, EA>();
+        public SortedDictionary<EA, EA> alreadyMatchedEdges = new SortedDictionary<EA, EA>();
 
         // bipartite graph of valid descendant potential matchings
         private BipartiteGraph<V, EA> bipartitePossibilities = new BipartiteGraph<V, EA>();
